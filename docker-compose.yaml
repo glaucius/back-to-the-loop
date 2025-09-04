@@ -1,0 +1,81 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: btl-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: btl_db
+      MARIADB_USER: btl_user
+      MARIADB_PASSWORD: btl_password
+    ports:
+      - "33066:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - btl_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: btl-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"   # MinIO API
+      - "9001:9001"   # MinIO Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - btl_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: btl-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8888:80"
+    depends_on:
+      - mariadb
+    networks:
+      - btl_network
+
+  backoffice:
+    image: tcc-backoffice:latest
+    container_name: btl-backoffice
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USER=btl_user
+      - DB_PASSWORD=btl_password
+      - DB_NAME=btl_db
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_PUBLIC_ENDPOINT=localhost:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=btl-images
+    ports:
+      - "5555:5000"
+    volumes:
+      - ./backoffice:/app
+    depends_on:
+      - mariadb
+      - minio
+    networks:
+      - btl_network
+
+volumes:
+  mariadb_data:
+  minio_data:
+
+networks:
+  btl_network:
+    driver: bridge

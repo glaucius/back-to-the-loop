@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Organization - BTL Backoffice{% endblock %}
+
+{% block page_title %}Edit Organization{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('organizacoes.list_organizacoes') }}">Organizations</a></li>
+<li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">Organization Information</h3>
+      </div>
+      <!-- /.card-header -->
+      <form method="POST">
+        <div class="card-body">
+          <div class="form-group">
+            <label for="nome">Organization Name</label>
+            <input type="text" class="form-control" id="nome" name="nome" value="{{ organizacao.nome }}" placeholder="Enter organization name" required>
+          </div>
+          <div class="form-group">
+            <label for="organizador">Organizer</label>
+            <select class="form-control" id="organizador" name="organizador" required>
+              <option value="">Select Organizer</option>
+              {% for organizador in organizadores %}
+              <option value="{{ organizador.id }}" {% if organizador.id == organizacao.organizador %}selected{% endif %}>
+                {{ organizador.nome }} ({{ organizador.email }})
+              </option>
+              {% endfor %}
+            </select>
+            <small class="form-text text-muted">Only users with Organizador profile are shown</small>
+          </div>
+          
+          {% if organizacao.backyards %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            This organization has {{ organizacao.backyards|length }} backyard(s) associated.
+          </div>
+          {% endif %}
+        </div>
+        <!-- /.card-body -->
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Update Organization
+          </button>
+          <a href="{{ url_for('organizacoes.list_organizacoes') }}" class="btn btn-default">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+    <!-- /.card -->
+  </div>
+</div>
+{% endblock %}

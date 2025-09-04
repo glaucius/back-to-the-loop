@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Profiles - BTL Backoffice{% endblock %}
+
+{% block page_title %}Profiles Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item active">Profiles</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Profiles List</h3>
+        <div class="card-tools">
+          <a href="{{ url_for('profiles.create_profile') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Add Profile
+          </a>
+        </div>
+      </div>
+      <!-- /.card-header -->
+      <div class="card-body table-responsive p-0">
+        <table class="table table-hover text-nowrap">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Users Count</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for profile in profiles %}
+            <tr>
+              <td>{{ profile.id }}</td>
+              <td>
+                <span class="badge badge-{{ 'success' if profile.nome == 'Admin' else 'info' }}">
+                  {{ profile.nome }}
+                </span>
+              </td>
+              <td>{{ profile.users|length }}</td>
+              <td>{{ profile.data_criacao.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                <a href="{{ url_for('profiles.edit_profile', id=profile.id) }}" class="btn btn-info btn-sm">
+                  <i class="fas fa-edit"></i>
+                </a>
+                {% if not profile.users %}
+                <form method="POST" action="{{ url_for('profiles.delete_profile', id=profile.id) }}" style="display: inline;" 
+                      onsubmit="return confirm('Are you sure you want to delete this profile?')">
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+                {% else %}
+                <button class="btn btn-danger btn-sm" disabled title="Cannot delete profile with users">
+                  <i class="fas fa-trash"></i>
+                </button>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center">No profiles found</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- /.card-body -->
+    </div>
+    <!-- /.card -->
+  </div>
+</div>
+{% endblock %}
