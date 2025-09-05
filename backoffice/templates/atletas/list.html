@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Atletas - BTL Backoffice{% endblock %}
+
+{% block page_title %}Gestão de Atletas{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item active">Atletas</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Lista de Atletas</h3>
+        <div class="card-tools">
+          {% if current_user.profile.nome == 'Admin' %}
+          <a href="{{ url_for('atletas.create') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Adicionar Atleta
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <!-- /.card-header -->
+      <div class="card-body table-responsive p-0">
+        <table class="table table-hover text-nowrap">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Foto</th>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Email</th>
+              <th>Data Nascimento</th>
+              <th>Cidade</th>
+              <th>Inscrições</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for atleta in atletas.items %}
+            <tr>
+              <td>{{ atleta.id }}</td>
+              <td>
+                {% if atleta.imagem_perfil %}
+                  <img src="{{ url_for('atletas.get_image', atleta_id=atleta.id) }}" 
+                       alt="Foto do atleta" class="img-circle" width="40" height="40">
+                {% else %}
+                  <img src="{{ url_for('static', filename='img/default-avatar.png') }}" 
+                       alt="Sem foto" class="img-circle" width="40" height="40">
+                {% endif %}
+              </td>
+              <td>{{ atleta.nome }}</td>
+              <td>{{ atleta.cpf }}</td>
+              <td>{{ atleta.email }}</td>
+              <td>
+                {% if atleta.data_nascimento %}
+                  {{ atleta.data_nascimento.strftime('%d/%m/%Y') }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>{{ atleta.cidade or '-' }}</td>
+              <td>
+                <span class="badge badge-info">
+                  {{ atleta.inscricoes|length }} evento(s)
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('atletas.view', id=atleta.id) }}" class="btn btn-info btn-sm" title="Visualizar">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a href="{{ url_for('atletas.inscricoes', id=atleta.id) }}" class="btn btn-warning btn-sm" title="Inscrições">
+                  <i class="fas fa-running"></i>
+                </a>
+                {% if current_user.profile.nome == 'Admin' %}
+                <a href="{{ url_for('atletas.edit', id=atleta.id) }}" class="btn btn-success btn-sm" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <form method="POST" action="{{ url_for('atletas.delete', id=atleta.id) }}" style="display: inline;" 
+                      onsubmit="return confirm('Tem certeza que deseja excluir este atleta?')">
+                  <button type="submit" class="btn btn-danger btn-sm" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center">Nenhum atleta encontrado</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- /.card-body -->
+      
+      {% if atletas.pages > 1 %}
+      <div class="card-footer clearfix">
+        <ul class="pagination pagination-sm m-0 float-right">
+          {% if atletas.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('atletas.list', page=atletas.prev_num) }}">«</a>
+          </li>
+          {% endif %}
+          
+          {% for page_num in atletas.iter_pages() %}
+            {% if page_num %}
+              {% if page_num != atletas.page %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('atletas.list', page=page_num) }}">{{ page_num }}</a>
+              </li>
+              {% else %}
+              <li class="page-item active">
+                <span class="page-link">{{ page_num }}</span>
+              </li>
+              {% endif %}
+            {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">…</span>
+            </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if atletas.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('atletas.list', page=atletas.next_num) }}">»</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    <!-- /.card -->
+  </div>
+</div>
+{% endblock %}

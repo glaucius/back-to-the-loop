@@ -21,7 +21,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Import models first
-from models import db, Backend_Users, Profile, Organizacao, Backyard
+from models import db, Backend_Users, Profile, Organizacao, Backyard, Atleta, AtletaBackyard
 
 # Initialize extensions
 db.init_app(app)
@@ -95,6 +95,8 @@ def dashboard():
         'total_users': Backend_Users.query.count(),
         'total_organizacoes': Organizacao.query.count(),
         'total_backyards': Backyard.query.count(),
+        'total_atletas': Atleta.query.count(),
+        'total_inscricoes': AtletaBackyard.query.count(),
     }
     
     # Filter based on user role
@@ -104,6 +106,19 @@ def dashboard():
         org_ids = [org.id for org in user_orgs]
         stats['my_organizacoes'] = len(user_orgs)
         stats['my_backyards'] = Backyard.query.filter(Backyard.organizador.in_(org_ids)).count() if org_ids else 0
+        
+        # Count atletas inscribed in organizador's backyards
+        if org_ids:
+            my_backyard_ids = [b.id for b in Backyard.query.filter(Backyard.organizador.in_(org_ids)).all()]
+            stats['my_atletas'] = db.session.query(AtletaBackyard.atleta_id).filter(
+                AtletaBackyard.backyard_id.in_(my_backyard_ids)
+            ).distinct().count() if my_backyard_ids else 0
+            stats['my_inscricoes'] = AtletaBackyard.query.filter(
+                AtletaBackyard.backyard_id.in_(my_backyard_ids)
+            ).count() if my_backyard_ids else 0
+        else:
+            stats['my_atletas'] = 0
+            stats['my_inscricoes'] = 0
     
     return render_template('dashboard.html', stats=stats)
 
@@ -116,11 +131,13 @@ from views.users import users_bp
 from views.profiles import profiles_bp
 from views.organizacoes import organizacoes_bp
 from views.backyards import backyards_bp
+from views.atletas import atletas_bp
 
 app.register_blueprint(users_bp, url_prefix='/users')
 app.register_blueprint(profiles_bp, url_prefix='/profiles')
 app.register_blueprint(organizacoes_bp, url_prefix='/organizacoes')
 app.register_blueprint(backyards_bp, url_prefix='/backyards')
+app.register_blueprint(atletas_bp, url_prefix='/atletas')
 
 # Database initialization is handled by init_db.py
 

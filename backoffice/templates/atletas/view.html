@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}{{ atleta.nome }} - BTL Backoffice{% endblock %}
+
+{% block page_title %}Detalhes do Atleta{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('atletas.list') }}">Atletas</a></li>
+<li class="breadcrumb-item active">{{ atleta.nome }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <!-- Profile Image -->
+    <div class="card card-primary card-outline">
+      <div class="card-body box-profile">
+        <div class="text-center">
+          {% if atleta.imagem_perfil %}
+            <img class="profile-user-img img-fluid img-circle"
+                 src="{{ url_for('atletas.get_image', atleta_id=atleta.id) }}"
+                 alt="Foto do atleta">
+          {% else %}
+            <img class="profile-user-img img-fluid img-circle"
+                 src="{{ url_for('static', filename='img/default-avatar.png') }}"
+                 alt="Sem foto">
+          {% endif %}
+        </div>
+
+        <h3 class="profile-username text-center">{{ atleta.nome }}</h3>
+        <p class="text-muted text-center">Atleta</p>
+
+        <ul class="list-group list-group-unbordered mb-3">
+          <li class="list-group-item">
+            <b>Inscrições Ativas</b> 
+            <a class="float-right">{{ inscricoes|selectattr('0.status_inscricao', 'equalto', 'inscrito')|list|length }}</a>
+          </li>
+          <li class="list-group-item">
+            <b>Eventos Participados</b> 
+            <a class="float-right">{{ inscricoes|length }}</a>
+          </li>
+          <li class="list-group-item">
+            <b>Vitórias</b> 
+            <a class="float-right">{{ inscricoes|selectattr('0.posicao_final', 'equalto', 1)|list|length }}</a>
+          </li>
+        </ul>
+
+        {% if current_user.profile.nome == 'Admin' %}
+        <a href="{{ url_for('atletas.edit', id=atleta.id) }}" class="btn btn-primary btn-block">
+          <i class="fas fa-edit"></i> Editar
+        </a>
+        {% endif %}
+        
+        <a href="{{ url_for('atletas.inscricoes', id=atleta.id) }}" class="btn btn-warning btn-block">
+          <i class="fas fa-running"></i> Gerenciar Inscrições
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <!-- About Me Box -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Informações Pessoais</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <strong><i class="fas fa-id-card mr-1"></i> CPF</strong>
+            <p class="text-muted">{{ atleta.cpf }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong><i class="fas fa-envelope mr-1"></i> Email</strong>
+            <p class="text-muted">{{ atleta.email }}</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <strong><i class="fas fa-birthday-cake mr-1"></i> Data de Nascimento</strong>
+            <p class="text-muted">
+              {% if atleta.data_nascimento %}
+                {{ atleta.data_nascimento.strftime('%d/%m/%Y') }}
+              {% else %}
+                Não informado
+              {% endif %}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <strong><i class="fas fa-calendar mr-1"></i> Cadastrado em</strong>
+            <p class="text-muted">{{ atleta.criado_em.strftime('%d/%m/%Y às %H:%M') }}</p>
+          </div>
+        </div>
+
+        <hr>
+
+        <strong><i class="fas fa-map-marker-alt mr-1"></i> Endereço</strong>
+        <p class="text-muted">
+          {% if atleta.endereco %}
+            {{ atleta.endereco }}<br>
+            {{ atleta.cidade or '' }}{% if atleta.cidade and atleta.estado %}, {% endif %}{{ atleta.estado or '' }}<br>
+            {{ atleta.pais or '' }}
+          {% else %}
+            Endereço não informado
+          {% endif %}
+        </p>
+
+        <hr>
+
+        <strong><i class="fas fa-clock mr-1"></i> Última Atualização</strong>
+        <p class="text-muted">{{ atleta.atualizado_em.strftime('%d/%m/%Y às %H:%M') }}</p>
+      </div>
+    </div>
+
+    <!-- Inscriptions History -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Histórico de Inscrições</h3>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Evento</th>
+              <th>Data do Evento</th>
+              <th>Data Inscrição</th>
+              <th>Status</th>
+              <th>Posição</th>
+              <th>Voltas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inscricao, backyard in inscricoes %}
+            <tr>
+              <td>
+                <strong>{{ backyard.nome }}</strong><br>
+                <small class="text-muted">{{ backyard.cidade or '' }}</small>
+              </td>
+              <td>
+                {% if backyard.data_evento %}
+                  {{ backyard.data_evento.strftime('%d/%m/%Y %H:%M') }}
+                {% else %}
+                  A definir
+                {% endif %}
+              </td>
+              <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y') }}</td>
+              <td>
+                {% if inscricao.status_inscricao == 'inscrito' %}
+                  <span class="badge badge-success">Inscrito</span>
+                {% elif inscricao.status_inscricao == 'cancelado' %}
+                  <span class="badge badge-danger">Cancelado</span>
+                {% elif inscricao.status_inscricao == 'finalizado' %}
+                  <span class="badge badge-primary">Finalizado</span>
+                {% else %}
+                  <span class="badge badge-secondary">{{ inscricao.status_inscricao.title() }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if inscricao.posicao_final %}
+                  {% if inscricao.posicao_final == 1 %}
+                    <span class="badge badge-warning">🏆 {{ inscricao.posicao_final }}º</span>
+                  {% elif inscricao.posicao_final == 2 %}
+                    <span class="badge badge-info">🥈 {{ inscricao.posicao_final }}º (Assist)</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ inscricao.posicao_final }}º</span>
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>{{ inscricao.voltas_completadas or 0 }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center">Nenhuma inscrição encontrada</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

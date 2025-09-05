@@ -74,27 +74,51 @@ class Backyard(db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Relationships - Many-to-Many with Atleta
+    atletas = db.relationship('Atleta', secondary='atleta_backyard', back_populates='backyards')
+    
     def __repr__(self):
         return f'<Backyard {self.nome}>'
 
-# Note: Atleta model is commented out as per requirements
-# class Atleta(db.Model):
-#     __tablename__ = 'atletas'
-#     
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     nome = db.Column(db.String(255), nullable=False)
-#     data_nascimento = db.Column(db.Date)
-#     sexo = db.Column(db.String(50))
-#     cpf = db.Column(db.String(14), unique=True)
-#     email = db.Column(db.String(255), nullable=False, unique=True)
-#     password = db.Column(db.String(255), nullable=False)
-#     endereco = db.Column(db.String(255))
-#     cidade = db.Column(db.String(255))
-#     estado = db.Column(db.String(255))
-#     pais = db.Column(db.String(255))
-#     profile_picture_path = db.Column(db.String(255))
-#     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-#     data_ultima_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-#     
-#     def __repr__(self):
-#         return f'<Atleta {self.nome}>'
+class Atleta(UserMixin, db.Model):
+    __tablename__ = 'atletas'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nome = db.Column(db.String(255), nullable=False)
+    cpf = db.Column(db.String(14), unique=True, nullable=False)
+    email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    data_nascimento = db.Column(db.Date)
+    imagem_perfil = db.Column(db.String(255))
+    endereco = db.Column(db.String(255))
+    cidade = db.Column(db.String(255))
+    estado = db.Column(db.String(255))
+    pais = db.Column(db.String(255))
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships - Many-to-Many with Backyard
+    backyards = db.relationship('Backyard', secondary='atleta_backyard', back_populates='atletas')
+    
+    def __repr__(self):
+        return f'<Atleta {self.nome}>'
+
+# Tabela de associação Many-to-Many entre Atleta e Backyard
+class AtletaBackyard(db.Model):
+    __tablename__ = 'atleta_backyard'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    atleta_id = db.Column(db.Integer, db.ForeignKey('atletas.id'), nullable=False)
+    backyard_id = db.Column(db.Integer, db.ForeignKey('backyards.id'), nullable=False)
+    data_inscricao = db.Column(db.DateTime, default=datetime.utcnow)
+    status_inscricao = db.Column(db.String(50), default='inscrito')  # inscrito, cancelado, finalizado
+    posicao_final = db.Column(db.Integer)  # Posição final na corrida (1 = vencedor, 2 = assist, etc.)
+    voltas_completadas = db.Column(db.Integer, default=0)  # Número de voltas completadas
+    tempo_total = db.Column(db.Time)  # Tempo total de corrida
+    
+    # Relationships
+    atleta = db.relationship('Atleta', backref='inscricoes')
+    backyard = db.relationship('Backyard', backref='inscricoes')
+    
+    def __repr__(self):
+        return f'<AtletaBackyard {self.atleta_id}-{self.backyard_id}>'

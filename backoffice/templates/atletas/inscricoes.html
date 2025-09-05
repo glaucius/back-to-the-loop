@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Inscrições de {{ atleta.nome }} - BTL Backoffice{% endblock %}
+
+{% block page_title %}Gerenciar Inscrições{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('atletas.list') }}">Atletas</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('atletas.view', id=atleta.id) }}">{{ atleta.nome }}</a></li>
+<li class="breadcrumb-item active">Inscrições</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <!-- Current Inscriptions -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-running"></i> Inscrições Atuais
+        </h3>
+      </div>
+      <div class="card-body">
+        {% if current_inscricoes %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inscricao, backyard in current_inscricoes %}
+              <tr>
+                <td>
+                  <strong>{{ backyard.nome }}</strong><br>
+                  <small class="text-muted">{{ backyard.cidade or '' }}</small>
+                </td>
+                <td>
+                  {% if backyard.data_evento %}
+                    {{ backyard.data_evento.strftime('%d/%m/%Y') }}
+                  {% else %}
+                    <small class="text-muted">A definir</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if inscricao.status_inscricao == 'inscrito' %}
+                    <span class="badge badge-success">Inscrito</span>
+                  {% elif inscricao.status_inscricao == 'cancelado' %}
+                    <span class="badge badge-danger">Cancelado</span>
+                  {% elif inscricao.status_inscricao == 'finalizado' %}
+                    <span class="badge badge-primary">Finalizado</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ inscricao.status_inscricao.title() }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if inscricao.status_inscricao == 'inscrito' %}
+                  <form method="POST" action="{{ url_for('atletas.cancelar_inscricao', inscricao_id=inscricao.id) }}" 
+                        style="display: inline;" onsubmit="return confirm('Tem certeza que deseja cancelar esta inscrição?')">
+                    <button type="submit" class="btn btn-danger btn-xs" title="Cancelar inscrição">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">
+          <i class="fas fa-info-circle"></i> Nenhuma inscrição encontrada
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <!-- Available Backyards -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-plus-circle"></i> Eventos Disponíveis
+        </h3>
+      </div>
+      <div class="card-body">
+        {% if available_backyards %}
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Data</th>
+                <th>Local</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for backyard in available_backyards %}
+              {% set already_inscribed = current_inscricoes|selectattr('1.id', 'equalto', backyard.id)|list|length > 0 %}
+              {% if not already_inscribed %}
+              <tr>
+                <td>
+                  <strong>{{ backyard.nome }}</strong><br>
+                  <small class="text-muted">{{ backyard.descricao[:50] }}{% if backyard.descricao and backyard.descricao|length > 50 %}...{% endif %}</small>
+                </td>
+                <td>
+                  {% if backyard.data_evento %}
+                    {{ backyard.data_evento.strftime('%d/%m/%Y') }}<br>
+                    <small class="text-muted">{{ backyard.data_evento.strftime('%H:%M') }}</small>
+                  {% else %}
+                    <small class="text-muted">A definir</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if backyard.cidade %}
+                    {{ backyard.cidade }}{% if backyard.estado %}, {{ backyard.estado }}{% endif %}
+                  {% else %}
+                    <small class="text-muted">-</small>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('atletas.inscrever_backyard', atleta_id=atleta.id, backyard_id=backyard.id) }}" 
+                        style="display: inline;">
+                    <button type="submit" class="btn btn-success btn-xs" title="Inscrever atleta">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">
+          <i class="fas fa-info-circle"></i> Nenhum evento disponível
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Athlete Info Card -->
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="card card-outline card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-user"></i> Informações do Atleta
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-2 text-center">
+            {% if atleta.imagem_perfil %}
+              <img src="{{ url_for('atletas.get_image', atleta_id=atleta.id) }}" 
+                   alt="Foto do atleta" class="img-circle" width="80" height="80">
+            {% else %}
+              <img src="{{ url_for('static', filename='img/default-avatar.png') }}" 
+                   alt="Sem foto" class="img-circle" width="80" height="80">
+            {% endif %}
+          </div>
+          <div class="col-md-10">
+            <h4>{{ atleta.nome }}</h4>
+            <p class="text-muted mb-1">
+              <i class="fas fa-envelope"></i> {{ atleta.email }} &nbsp;&nbsp;
+              <i class="fas fa-id-card"></i> {{ atleta.cpf }}
+            </p>
+            {% if atleta.cidade %}
+            <p class="text-muted mb-1">
+              <i class="fas fa-map-marker-alt"></i> 
+              {{ atleta.cidade }}{% if atleta.estado %}, {{ atleta.estado }}{% endif %}{% if atleta.pais %}, {{ atleta.pais }}{% endif %}
+            </p>
+            {% endif %}
+            {% if atleta.data_nascimento %}
+            <p class="text-muted mb-0">
+              <i class="fas fa-birthday-cake"></i> {{ atleta.data_nascimento.strftime('%d/%m/%Y') }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-12 text-center">
+    <a href="{{ url_for('atletas.view', id=atleta.id) }}" class="btn btn-info">
+      <i class="fas fa-arrow-left"></i> Voltar ao Perfil
+    </a>
+    <a href="{{ url_for('atletas.list') }}" class="btn btn-secondary">
+      <i class="fas fa-list"></i> Listar Atletas
+    </a>
+  </div>
+</div>
+{% endblock %}
