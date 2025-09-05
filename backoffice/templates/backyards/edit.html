@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Backyard - BTL Backoffice{% endblock %}
+
+{% block page_title %}Edit Backyard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('backyards.list_backyards') }}">Backyards</a></li>
+<li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">Backyard Information</h3>
+      </div>
+      <!-- /.card-header -->
+      <form id="edit-backyard-form" method="POST" action="{{ url_for('backyards.update_backyard', id=backyard.id) }}" enctype="multipart/form-data">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="nome">Backyard Name</label>
+                <input type="text" class="form-control" id="nome" name="nome" value="{{ backyard.nome }}" placeholder="Enter backyard name" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="organizador">Organization</label>
+                <select class="form-control" id="organizador" name="organizador" required>
+                  <option value="">Select Organization</option>
+                  {% for organizacao in organizacoes %}
+                  <option value="{{ organizacao.id }}" {% if organizacao.id == backyard.organizador %}selected{% endif %}>
+                    {{ organizacao.nome }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="descricao">Description</label>
+            <textarea class="form-control" id="descricao" name="descricao" rows="3" placeholder="Enter description">{{ backyard.descricao or '' }}</textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="endereco">Address</label>
+            <input type="text" class="form-control" id="endereco" name="endereco" value="{{ backyard.endereco or '' }}" placeholder="Enter address">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="cidade">City</label>
+                <input type="text" class="form-control" id="cidade" name="cidade" value="{{ backyard.cidade or '' }}" placeholder="Enter city">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="estado">State</label>
+                <input type="text" class="form-control" id="estado" name="estado" value="{{ backyard.estado or '' }}" placeholder="Enter state">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="pais">Country</label>
+                <input type="text" class="form-control" id="pais" name="pais" value="{{ backyard.pais or '' }}" placeholder="Enter country">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="data_evento">Event Date & Time</label>
+            <input type="datetime-local" class="form-control" id="data_evento" name="data_evento" value="{{ backyard.data_evento.strftime('%Y-%m-%dT%H:%M') if backyard.data_evento else '' }}">
+            <small class="form-text text-muted">When does the event start?</small>
+          </div>
+          
+          <!-- Image Management Section -->
+          <hr>
+          <h5>Images</h5>
+          <div class="row">
+            <!-- Profile Picture -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Profile Picture</label>
+                {% if backyard.profile_picture_path %}
+                <div class="mb-2">
+                  <img src="{{ url_for('backyards.get_image', backyard_id=backyard.id, image_type='profile_picture') }}" 
+                       class="img-thumbnail" style="max-width: 200px; max-height: 150px;" alt="Profile Picture">
+                  <div class="mt-1">
+                    <small class="text-muted">Current profile picture</small>
+                  </div>
+                </div>
+                {% endif %}
+                <div class="input-group">
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="profile_picture" name="profile_picture" accept="image/*">
+                    <label class="custom-file-label" for="profile_picture">
+                      {% if backyard.profile_picture_path %}Replace file{% else %}Choose file{% endif %}
+                    </label>
+                  </div>
+                </div>
+                <!-- Preview area for new image -->
+                <div id="profile_preview_container" style="display: none;" class="mt-2">
+                  <img id="profile_preview" class="img-thumbnail" style="max-width: 200px; max-height: 150px;" alt="Preview">
+                  <div class="mt-1">
+                    <small class="text-muted">New image preview</small>
+                  </div>
+                </div>
+                <small class="form-text text-muted">
+                  Upload a main photo representing this backyard. Maximum 5MB. Supported formats: JPG, PNG, GIF, WebP
+                </small>
+              </div>
+            </div>
+            
+            <!-- Logo -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Logo</label>
+                {% if backyard.logo_path %}
+                <div class="mb-2">
+                  <img src="{{ url_for('backyards.get_image', backyard_id=backyard.id, image_type='logo') }}" 
+                       class="img-thumbnail" style="max-width: 200px; max-height: 150px;" alt="Logo">
+                  <div class="mt-1">
+                    <small class="text-muted">Current logo</small>
+                  </div>
+                </div>
+                {% endif %}
+                <div class="input-group">
+                  <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="logo" name="logo" accept="image/*">
+                    <label class="custom-file-label" for="logo">
+                      {% if backyard.logo_path %}Replace file{% else %}Choose file{% endif %}
+                    </label>
+                  </div>
+                </div>
+                <!-- Preview area for new image -->
+                <div id="logo_preview_container" style="display: none;" class="mt-2">
+                  <img id="logo_preview" class="img-thumbnail" style="max-width: 200px; max-height: 150px;" alt="Preview">
+                  <div class="mt-1">
+                    <small class="text-muted">New logo preview</small>
+                  </div>
+                </div>
+                <small class="form-text text-muted">
+                  Upload a logo for this backyard. Maximum 5MB. Supported formats: JPG, PNG, GIF, WebP
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /.card-body -->
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Update Backyard vaiiii
+          </button>
+          <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-default">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+    <!-- /.card -->
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  // Debug: Add form submit handler - only for main edit form
+  $('#edit-backyard-form').on('submit', function(e) {
+    console.log('Edit form submit triggered!');
+    console.log('Form data:', new FormData(this));
+    
+    // Check if form is valid
+    if (!this.checkValidity()) {
+      console.log('Form is not valid!');
+      e.preventDefault();
+      return false;
+    }
+    
+    console.log('Form is valid, submitting...');
+    return true;
+  });
+  
+  // Debug: Add button click handler - only for main form button
+  $('#edit-backyard-form button[type="submit"]').on('click', function(e) {
+    console.log('Edit form submit button clicked!');
+    console.log('Button element:', this);
+  });
+
+  // Custom file input label update
+  $('.custom-file-input').on('change', function() {
+    var fileName = $(this).val().split('\\').pop();
+    if (fileName) {
+      $(this).siblings('.custom-file-label').addClass('selected').html(fileName);
+    } else {
+      $(this).siblings('.custom-file-label').removeClass('selected').html('Choose file');
+    }
+  });
+
+  // Image preview functionality
+  function previewImage(input, previewId, containerId) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        $('#' + previewId).attr('src', e.target.result);
+        $('#' + containerId).show();
+      }
+      reader.readAsDataURL(input.files[0]);
+    } else {
+      $('#' + containerId).hide();
+    }
+  }
+
+  // Profile picture change handler
+  $('#profile_picture').change(function() {
+    previewImage(this, 'profile_preview', 'profile_preview_container');
+  });
+
+  // Logo change handler
+  $('#logo').change(function() {
+    previewImage(this, 'logo_preview', 'logo_preview_container');
+  });
+
+  // Clear file input and preview
+  function clearFileInput(inputId, previewContainerId) {
+    $('#' + inputId).val('');
+    $('#' + inputId).siblings('.custom-file-label').removeClass('selected').html('Choose file');
+    $('#' + previewContainerId).hide();
+  }
+});
+</script>
+{% endblock %}
