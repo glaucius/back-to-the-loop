@@ -126,6 +126,34 @@ class ImageService:
         except Exception as e:
             raise Exception(f"Error processing image: {str(e)}")
     
+    def upload_image_data(self, image_data, filename, image_type='profile_picture', folder='backyards'):
+        """Upload image data directly to MinIO"""
+        try:
+            # Generate unique filename
+            extension = filename.split('.')[-1] if '.' in filename else 'jpg'
+            unique_filename = f"{uuid.uuid4().hex}.{extension}"
+            
+            # Create object name with folder structure
+            object_name = f"{folder}/{image_type}/{unique_filename}"
+            
+            # Upload to MinIO
+            self.client.put_object(
+                self.bucket_name,
+                object_name,
+                io.BytesIO(image_data),
+                length=len(image_data),
+                content_type='image/jpeg'
+            )
+            
+            return {
+                'success': True,
+                'file_path': object_name,
+                'file_url': f"http://{self.minio_endpoint}/{self.bucket_name}/{object_name}"
+            }
+        
+        except Exception as e:
+            return {'success': False, 'errors': [f"Upload failed: {str(e)}"]}
+
     def upload_image(self, file, image_type='profile_picture', folder='backyards'):
         """Upload image to MinIO"""
         # Validate image

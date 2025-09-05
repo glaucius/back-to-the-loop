@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ atleta.nome }} - BTL Backoffice{% endblock %}
+
+{% block page_title %}Editar Atleta{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('atletas.list') }}">Atletas</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('atletas.view', id=atleta.id) }}">{{ atleta.nome }}</a></li>
+<li class="breadcrumb-item active">Editar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">Editar Informações do Atleta</h3>
+      </div>
+      <form method="POST" enctype="multipart/form-data">
+        <div class="card-body">
+          <!-- Current Image Preview -->
+          {% if atleta.imagem_perfil %}
+          <div class="row mb-3">
+            <div class="col-md-12 text-center">
+              <img src="{{ url_for('atletas.get_image', atleta_id=atleta.id) }}" 
+                   alt="Foto atual" class="img-circle" width="100" height="100">
+              <br><small class="text-muted">Foto atual</small>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="nome">Nome *</label>
+                <input type="text" class="form-control" id="nome" name="nome" 
+                       value="{{ atleta.nome }}" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="cpf">CPF *</label>
+                <input type="text" class="form-control" id="cpf" name="cpf" 
+                       value="{{ atleta.cpf }}" required placeholder="000.000.000-00" maxlength="14">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="{{ atleta.email }}" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="password">Nova Senha</label>
+                <input type="password" class="form-control" id="password" name="password" 
+                       placeholder="Deixe em branco para manter a senha atual">
+                <small class="form-text text-muted">Deixe em branco para manter a senha atual</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="data_nascimento">Data de Nascimento</label>
+                <input type="date" class="form-control" id="data_nascimento" name="data_nascimento"
+                       value="{% if atleta.data_nascimento %}{{ atleta.data_nascimento.strftime('%Y-%m-%d') }}{% endif %}">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="imagem_perfil">Nova Foto do Perfil</label>
+                <input type="file" class="form-control-file" id="imagem_perfil" name="imagem_perfil" 
+                       accept="image/*">
+                <small class="form-text text-muted">Formatos aceitos: JPG, PNG, GIF (máx. 5MB). Deixe em branco para manter a foto atual.</small>
+                
+                <!-- Image Crop Modal -->
+                <div class="modal fade" id="cropModal" tabindex="-1" role="dialog" aria-labelledby="cropModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="cropModalLabel">Ajustar Foto do Perfil</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row">
+                          <div class="col-md-8">
+                            <div class="img-container">
+                              <img id="cropImage" src="" alt="Imagem para corte" style="max-width: 100%; height: auto;">
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="preview-container">
+                              <h6>Preview:</h6>
+                              <div class="img-preview" style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 1px solid #ddd; margin: 10px 0;"></div>
+                              <small class="text-muted">Esta será sua nova foto de perfil</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="cropConfirm">Confirmar Corte</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Hidden input for cropped image data -->
+                <input type="hidden" id="croppedImage" name="cropped_image" value="">
+              </div>
+            </div>
+          </div>
+
+          <h5 class="mt-3 mb-2">Endereço</h5>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="endereco">Endereço</label>
+                <input type="text" class="form-control" id="endereco" name="endereco" 
+                       value="{{ atleta.endereco or '' }}" placeholder="Rua, número, complemento">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="cidade">Cidade</label>
+                <input type="text" class="form-control" id="cidade" name="cidade" 
+                       value="{{ atleta.cidade or '' }}">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="estado">Estado</label>
+                <input type="text" class="form-control" id="estado" name="estado" 
+                       value="{{ atleta.estado or '' }}" placeholder="Ex: SP, RJ, MG">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="pais">País</label>
+                <input type="text" class="form-control" id="pais" name="pais" 
+                       value="{{ atleta.pais or 'Brasil' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar Alterações
+          </button>
+          <a href="{{ url_for('atletas.view', id=atleta.id) }}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Máscara para CPF
+document.getElementById('cpf').addEventListener('input', function(e) {
+  let value = e.target.value.replace(/\D/g, '');
+  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+  value = value.replace(/(\d{3})(\d)/, '$1.$2');
+  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  e.target.value = value;
+});
+</script>
+
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+
+<!-- Cropper.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+<script>
+let cropper;
+let originalFile;
+
+// Handle file input change
+document.getElementById('imagem_perfil').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    originalFile = file;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione apenas arquivos de imagem.');
+      return;
+    }
+    
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('O arquivo é muito grande. Máximo permitido: 5MB');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const cropImage = document.getElementById('cropImage');
+      cropImage.src = event.target.result;
+      
+      // Show modal
+      $('#cropModal').modal('show');
+      
+      // Initialize cropper when modal is shown
+      $('#cropModal').on('shown.bs.modal', function() {
+        if (cropper) {
+          cropper.destroy();
+        }
+        
+        cropper = new Cropper(cropImage, {
+          aspectRatio: 1, // Square crop for profile pictures
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.8,
+          restore: false,
+          guides: false,
+          center: false,
+          highlight: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          toggleDragModeOnDblclick: false,
+          preview: '.img-preview'
+        });
+      });
+    };
+    
+    reader.readAsDataURL(file);
+  }
+});
+
+// Handle crop confirmation
+document.getElementById('cropConfirm').addEventListener('click', function() {
+  if (cropper) {
+    const canvas = cropper.getCroppedCanvas({
+      width: 400,
+      height: 400,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high'
+    });
+    
+    // Convert to blob and create new file
+    canvas.toBlob(function(blob) {
+      // Store the cropped image data as base64
+      const reader = new FileReader();
+      reader.onload = function() {
+        document.getElementById('croppedImage').value = reader.result;
+        $('#cropModal').modal('hide');
+        
+        // Optional: Show preview of cropped image
+        const preview = document.createElement('div');
+        preview.innerHTML = `
+          <div class="mt-2">
+            <small class="text-success">✓ Nova foto cortada e pronta para upload</small><br>
+            <img src="${reader.result}" style="width: 50px; height: 50px; border-radius: 50%; border: 1px solid #ddd;" alt="Preview">
+          </div>
+        `;
+        
+        // Remove any existing preview
+        const existingPreview = document.querySelector('.crop-preview');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+        
+        preview.className = 'crop-preview';
+        document.getElementById('imagem_perfil').parentNode.appendChild(preview);
+      };
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.9);
+  }
+});
+
+// Clean up when modal is hidden
+$('#cropModal').on('hidden.bs.modal', function() {
+  if (cropper) {
+    cropper.destroy();
+    cropper = null;
+  }
+});
+</script>
+{% endblock %}
