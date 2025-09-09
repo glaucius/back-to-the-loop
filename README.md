@@ -185,10 +185,10 @@ cd btl
 ### 2. Execução Automática
 ```bash
 # Construir e iniciar todos os serviços
-docker-compose up --build
+docker compose up --build
 
 # Para executar em background
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 > **🎯 Inicialização Automática**: O sistema cria automaticamente:
@@ -238,7 +238,7 @@ python app.py
 bash bash.bash
 
 # Logs da aplicação
-docker-compose logs backoffice
+docker compose logs backoffice
 
 # Backup do banco
 docker exec btl-mariadb mysqldump -u btl_user -pbtl_password btl_db > backup.sql
@@ -308,25 +308,25 @@ docker exec btl-mariadb mysqldump -u btl_user -pbtl_password btl_db > backup.sql
 
 1. **Erro de conexão com banco**:
    ```bash
-   docker-compose logs mariadb
+   docker compose logs mariadb
    ```
 
 2. **Erro de upload de imagens**:
    ```bash
-   docker-compose logs minio
+   docker compose logs minio
    ```
 
 3. **Aplicação não inicia**:
    ```bash
-   docker-compose logs backoffice
+   docker compose logs backoffice
    ```
 
 ### Reinicialização Completa
 ```bash
 # Para volumes corrompidos
-docker-compose down -v
+docker compose down -v
 docker volume prune
-docker-compose up --build
+docker compose up --build
 
 # Para reinstalação completa
 bash bash.bash

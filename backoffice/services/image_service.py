@@ -26,9 +26,6 @@ class ImageService:
         # For URL generation, use localhost instead of internal docker name
         self.public_endpoint = self.minio_endpoint.replace('minio:9000', 'localhost:9000')
         
-        # Ensure bucket exists
-        self._ensure_bucket_exists()
-        
         # Allowed file extensions and MIME types
         self.allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
         self.allowed_mime_types = {
@@ -44,14 +41,6 @@ class ImageService:
             'logo': (400, 400)  # Logo
         }
     
-    def _ensure_bucket_exists(self):
-        """Ensure the bucket exists, create if it doesn't"""
-        try:
-            if not self.client.bucket_exists(self.bucket_name):
-                self.client.make_bucket(self.bucket_name)
-                print(f"Created bucket: {self.bucket_name}")
-        except S3Error as e:
-            print(f"Error creating bucket: {e}")
     
     def validate_image(self, file):
         """Validate uploaded image file"""
