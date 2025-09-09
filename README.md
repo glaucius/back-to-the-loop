@@ -99,6 +99,7 @@ btl/
 │   ├── app.py                 # Aplicação principal Flask
 │   ├── models.py              # Modelos do banco de dados (SQLAlchemy)
 │   ├── init_db.py             # Script de inicialização automática do banco
+│   ├── init_minio.py          # Script de configuração do MinIO
 │   ├── views/                 # Controllers organizados por módulos
 │   │   ├── users.py           # Gestão de usuários
 │   │   ├── profiles.py        # Gestão de perfis
@@ -121,8 +122,16 @@ btl/
 │   │   └── image_service.py   # Integração com MinIO
 │   ├── requirements.txt       # Dependências Python
 │   └── Dockerfile             # Configuração do container
+├── 🛠️ Scripts Utilitários:
+├── setup_fresh.sh             # Setup completo do zero
+├── build.sh                   # Rebuild rápido da aplicação
+├── cleanup_total.sh           # Limpeza total do sistema Docker
+├── test_minio.py              # Teste de configuração do MinIO
+├── 📄 Documentação:
 ├── docker-compose.yaml        # Orquestração dos serviços
 ├── datamodel.txt              # Documentação do modelo de dados
+├── INSTALL.md                 # Guia detalhado de instalação
+├── APIS_GRATUITAS.md          # APIs utilizadas no projeto
 └── README.md                  # Este arquivo
 ```
 
@@ -182,7 +191,13 @@ git clone <url-do-repositorio>
 cd btl
 ```
 
-### 2. Execução Automática
+### 2. Setup Automático (Recomendado)
+```bash
+# Setup completo do zero com aguardo de serviços
+./setup_fresh.sh
+```
+
+**OU execução manual:**
 ```bash
 # Construir e iniciar todos os serviços
 docker compose up --build
@@ -195,6 +210,8 @@ docker compose up -d --build
 > - Todas as tabelas do banco de dados
 > - Perfis padrão (Admin, Organizador)
 > - Usuário admin: `admin@btl.com` / `admin123`
+> - Bucket MinIO público configurado
+> - Estrutura de pastas para imagens
 
 ### 3. Acesse os Serviços
 
@@ -213,9 +230,18 @@ docker compose up -d --build
 
 ### MinIO (Object Storage)
 - **Console**: http://localhost:9001
+- **API**: http://localhost:9000
 - **Usuário**: minioadmin
 - **Senha**: minioadmin123
-- **Bucket**: btl-images
+- **Bucket**: btl-images (configurado automaticamente como público)
+- **Estrutura de pastas**:
+  ```
+  btl-images/
+  ├── backyards/profile_picture/
+  ├── backyards/logo/
+  ├── atletas/profile_picture/
+  └── organizacoes/logo/
+  ```
 
 ### PhpMyAdmin
 - **URL**: http://localhost:8888
@@ -224,24 +250,105 @@ docker compose up -d --build
 
 ## 👨‍💻 Desenvolvimento
 
-### Instalação Local (Desenvolvimento)
+### 🚀 Workflow de Desenvolvimento
+
+#### **Setup Inicial (Primeira vez)**
+```bash
+# 1. Clone e entre no diretório
+git clone <url-do-repositorio>
+cd btl
+
+# 2. Setup completo automático
+./setup_fresh.sh
+
+# 3. Acesse: http://localhost:5555
+# Login: admin@btl.com / admin123
+```
+
+#### **Desenvolvimento Diário**
+```bash
+# Fazer mudanças no código...
+
+# Rebuild rápido
+./build.sh
+
+# Ver logs se necessário
+docker compose logs backoffice -f
+
+# Teste funcionalidades
+# Acesse: http://localhost:5555
+```
+
+#### **Quando algo der errado**
+```bash
+# 1. Restart simples
+docker compose restart
+
+# 2. Se persistir, rebuild completo
+docker compose down
+./setup_fresh.sh
+
+# 3. Se ainda persistir, limpeza total
+./cleanup_total.sh
+./setup_fresh.sh
+```
+
+### Instalação Local (Desenvolvimento sem Docker)
 ```bash
 cd backoffice
 pip install -r requirements.txt
-python init_db.py
-python app.py
+python init_minio.py  # Configurar MinIO
+python init_db.py     # Inicializar banco
+python app.py         # Executar aplicação
 ```
 
-### Scripts Úteis
-```bash
-# Rebuild rápido (bash.bash)
-bash bash.bash
+### 🛠️ Scripts Utilitários
 
+O projeto inclui vários scripts para facilitar o desenvolvimento e manutenção:
+
+#### **🚀 Scripts de Build e Deploy**
+```bash
+# Setup completo do zero (recomendado)
+./setup_fresh.sh
+
+# Rebuild rápido da aplicação
+./build.sh
+
+# Inicialização automática (já incluída no setup_fresh.sh)
+docker compose up --build
+```
+
+#### **🧹 Scripts de Limpeza**
+```bash
+# Limpeza total do sistema Docker
+./cleanup_total.sh
+
+# Limpeza de volumes específicos
+docker compose down -v
+```
+
+#### **📊 Scripts de Monitoramento**
+```bash
 # Logs da aplicação
 docker compose logs backoffice
 
-# Backup do banco
+# Logs de todos os serviços
+docker compose logs
+
+# Status dos containers
+docker compose ps
+
+# Teste de conectividade MinIO
+python test_minio.py
+```
+
+#### **💾 Scripts de Backup**
+```bash
+# Backup do banco de dados
 docker exec btl-mariadb mysqldump -u btl_user -pbtl_password btl_db > backup.sql
+
+# Backup completo com timestamp
+docker exec btl-mariadb mysqldump -u btl_user -pbtl_password btl_db > "backup_$(date +%Y%m%d_%H%M%S).sql"
 ```
 
 ## 🔐 Controle de Acesso
@@ -321,16 +428,37 @@ docker exec btl-mariadb mysqldump -u btl_user -pbtl_password btl_db > backup.sql
    docker compose logs backoffice
    ```
 
-### Reinicialização Completa
+### 🔄 Reinicialização e Limpeza
+
+#### **Reinicialização Simples**
 ```bash
-# Para volumes corrompidos
+# Rebuild rápido da aplicação
+./build.sh
+
+# Restart apenas dos containers
+docker compose restart
+```
+
+#### **Reinicialização Completa**
+```bash
+# Para volumes corrompidos ou problemas persistentes
 docker compose down -v
-docker volume prune
 docker compose up --build
 
-# Para reinstalação completa
-bash bash.bash
+# Setup completo do zero (recomendado)
+./setup_fresh.sh
 ```
+
+#### **Limpeza Total do Sistema**
+```bash
+# Remove TUDO: containers, volumes, networks, cache
+./cleanup_total.sh
+
+# Depois de limpar, recriar do zero
+./setup_fresh.sh
+```
+
+> **⚠️ Atenção**: O `cleanup_total.sh` remove **TODOS** os containers, volumes e imagens Docker do sistema, não apenas do BTL!
 
 ## 📈 Roadmap
 
