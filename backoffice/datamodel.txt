@@ -1,111 +1,134 @@
-BTL (Backyard Trail League) - Data Model
-==========================================
+Class Backend_Users
+    id, incremental, PK
+    nome, varchar
+    email, varchar
+    password, varchar
+    profile_id, FK from Profile table/class
+    data_criacao, timestamp
+    data_ultima_atualizacao, timestamp    
 
 Class Profile
-    id, integer, PK, auto_increment
-    nome, varchar(255), not_null
-    data_criacao, datetime, default=utcnow
-    data_ultima_atualizacao, datetime, default=utcnow, onupdate=utcnow
-
-    Relationships:
-    - One-to-Many with Backend_Users
-
-Class Backend_Users (UserMixin)
-    id, integer, PK, auto_increment
-    nome, varchar(255), not_null
-    email, varchar(255), not_null, unique
-    password, varchar(255), not_null
-    profile_id, integer, FK to profiles.id, not_null
-    data_criacao, datetime, default=utcnow
-    data_ultima_atualizacao, datetime, default=utcnow, onupdate=utcnow
-
-    Relationships:
-    - Many-to-One with Profile
-    - One-to-Many with Organizacao
-
-    Methods:
-    - is_admin() -> returns profile.nome == 'Admin'
-    - is_organizador() -> returns profile.nome == 'Organizador'
+    id, incremental, PK
+    nome, varchar
+    data_criacao, timestamp
+    data_ultima_atualizacao, timestamp    
 
 Class Organizacao
-    id, integer, PK, auto_increment
-    nome, varchar(255), not_null
-    organizador, integer, FK to backend_users.id, not_null
-    data_criacao, datetime, default=utcnow
-    data_ultima_atualizacao, datetime, default=utcnow, onupdate=utcnow
-
-    Relationships:
-    - Many-to-One with Backend_Users (organizador)
-    - One-to-Many with Backyard
+    id, incremental, PK
+    nome, varchar
+    organizador_id, FK from Backend_Users table/class
+    data_criacao, timestamp
+    data_ultima_atualizacao, timestamp
 
 Class Backyard
-    id, integer, PK, auto_increment
-    nome, varchar(255), not_null
-    organizador, integer, FK to organizacoes.id, not_null
-    descricao, text, nullable
-    endereco, varchar(255), nullable
-    cidade, varchar(255), nullable
-    estado, varchar(255), nullable
-    pais, varchar(255), nullable
-    profile_picture_path, varchar(255), nullable  # Foto principal da backyard
-    logo_path, varchar(255), nullable  # Logo da backyard
-    data_evento, datetime, nullable  # Data e hora do início do evento
-    data_criacao, datetime, default=utcnow
-    data_ultima_atualizacao, datetime, default=utcnow, onupdate=utcnow
+    id, incremental, PK
+    nome, varchar
+    organizador_id, FK from Organizacao table/class
+    descricao, text
+    endereco, varchar
+    cidade, varchar
+    estado, varchar
+    pais, varchar
+    data_evento, date
+    capacidade, integer (máximo de atletas que podem participar)
+    numero_inicial, integer (primeiro número de peito a ser atribuído)
+    status, enum (PREPARACAO, ATIVO, PAUSADO, FINALIZADO)
+    profile_picture_path, varchar
+    data_criacao, timestamp
+    data_ultima_atualizacao, timestamp
 
-    Relationships:
-    - Many-to-One with Organizacao
-    - Many-to-Many with Atleta (through AtletaBackyard)
+Class Atleta
+    id, incremental, PK
+    nome, varchar
+    data_nascimento, date
+    sexo, varchar
+    cpf, varchar
+    email, varchar
+    password, varchar
+    endereco, varchar
+    cidade, varchar
+    estado, varchar
+    pais, varchar
+    profile_picture_path, varchar
+    data_criacao, timestamp
+    data_ultima_atualizacao, timestamp
 
-Class Atleta (UserMixin)
-    id, integer, PK, auto_increment
-    nome, varchar(255), not_null
-    cpf, varchar(14), unique, not_null
-    email, varchar(255), not_null, unique
-    password, varchar(255), not_null
-    data_nascimento, date, nullable
-    imagem_perfil, varchar(255), nullable  # Path da imagem cortada/processada
-    endereco, varchar(255), nullable
-    cidade, varchar(255), nullable
-    estado, varchar(255), nullable
-    pais, varchar(255), nullable
-    criado_em, datetime, default=utcnow
-    atualizado_em, datetime, default=utcnow, onupdate=utcnow
+Class AtletaBackyard (Tabela de Inscrição - Relacionamento Many-to-Many)
+    id, incremental, PK
+    atleta_id, FK from Atleta table/class
+    backyard_id, FK from Backyard table/class
+    numero_peito, integer (número do peito do atleta na prova)
+    data_inscricao, timestamp
+    data_criacao, timestamp
+    data_ultima_atualizacao, timestamp
 
-    Relationships:
-    - Many-to-Many with Backyard (through AtletaBackyard)
+Class Loop
+    id, incremental, PK
+    backyard_id, FK from Backyard table/class
+    numero_loop, integer
+    status, enum (PREPARACAO, ATIVO, FINALIZADO)
+    data_inicio, timestamp
+    data_fim, timestamp
+    criado_em, timestamp
+    atualizado_em, timestamp
 
-Class AtletaBackyard (Association Table)
-    id, integer, PK, auto_increment
-    atleta_id, integer, FK to atletas.id, not_null
-    backyard_id, integer, FK to backyards.id, not_null
-    data_inscricao, datetime, default=utcnow
-    status_inscricao, varchar(50), default='inscrito'  # inscrito, cancelado, finalizado
-    posicao_final, integer, nullable  # Posição final na corrida (1 = vencedor, 2 = segundo, etc.)
-    voltas_completadas, integer, default=0  # Número de voltas completadas
-    tempo_total, time, nullable  # Tempo total de corrida
+Class AtletaLoop (Participação do Atleta no Loop)
+    id, incremental, PK
+    atleta_id, FK from Atleta table/class
+    loop_id, FK from Loop table/class
+    status, enum (ATIVO, CONCLUIDO, ELIMINADO, DESISTENCIA)
+    tempo_total_segundos, integer (tempo em segundos para completar o loop)
+    criado_em, timestamp
+    atualizado_em, timestamp
 
-    Relationships:
-    - Many-to-One with Atleta
-    - Many-to-One with Backyard
+ENUMS:
+    BackyardStatus: PREPARACAO, ATIVO, PAUSADO, FINALIZADO
+    LoopStatus: PREPARACAO, ATIVO, FINALIZADO
+    AtletaLoopStatus: ATIVO, CONCLUIDO, ELIMINADO, DESISTENCIA
 
-==========================================
-System Features:
-- User authentication and authorization (Admin, Organizador profiles)
-- Image upload and cropping for athlete profiles (Cropper.js integration)
-- MinIO object storage for images
-- Event management and athlete registration
-- Race results tracking (position, laps, time)
-- Multi-organization support
+RELACIONAMENTOS:
+    - Backend_Users 1:N Profile (um perfil pode ter vários usuários)
+    - Backend_Users 1:N Organizacao (um usuário pode ter várias organizações)
+    - Organizacao 1:N Backyard (uma organização pode ter várias backyards)
+    - Backyard 1:N Loop (uma backyard pode ter vários loops)
+    - Backyard N:M Atleta (através de AtletaBackyard - inscrições)
+    - Loop N:M Atleta (através de AtletaLoop - participação nos loops)
 
-Image Processing:
-- Profile pictures are cropped to square format (1:1 aspect ratio)
-- Images stored in MinIO with folder structure: atletas/profile_picture/
-- Cropped images are 400x400px in JPEG format with 90% quality
-- Fallback to regular upload if crop is not used
+FUNCIONALIDADES PRINCIPAIS:
+    1. Sistema de Números de Peito:
+       - Cada backyard define capacidade máxima e número inicial
+       - Números são atribuídos automaticamente nas inscrições
+       - Botão "Gerar Números" para atribuir números sob demanda
+    
+    2. Gestão de Loops:
+       - Controle de status de cada loop (preparação, ativo, finalizado)
+       - Registro de tempos de cada atleta por loop
+       - Regras do Backyard Ultra: evento só termina com loop solo completado
+    
+    3. Status de Atletas:
+       - ATIVO: atleta está correndo o loop atual
+       - CONCLUIDO: atleta terminou o loop no tempo
+       - ELIMINADO: atleta não completou o loop no tempo
+       - DESISTENCIA: atleta desistiu voluntariamente
+    
+    4. Autenticação e Autorização:
+       - Perfis: Admin (acesso total) e Organizador (suas backyards)
+       - Login seguro com hash de senhas
+       - Controle de acesso por decoradores
 
-Database Relationships Summary:
-- Profile -> Backend_Users (1:N)
-- Backend_Users -> Organizacao (1:N)
-- Organizacao -> Backyard (1:N)
-- Atleta <-> Backyard (M:N through AtletaBackyard)
+REGRAS DE NEGÓCIO:
+    1. Backyard Ultra:
+       - Cada loop tem duração fixa (normalmente 1 hora)
+       - Atletas que não completam no tempo são eliminados
+       - Evento só termina quando um atleta completa um loop sozinho
+       - O último atleta restante é o vencedor
+    
+    2. Números de Peito:
+       - Únicos por backyard
+       - Sequenciais a partir do número inicial definido
+       - Máximo definido pela capacidade da backyard
+    
+    3. Loops:
+       - Criados sequencialmente (1, 2, 3...)
+       - Apenas atletas que completaram o loop anterior participam do próximo
+       - Status automático baseado na conclusão dos participantes

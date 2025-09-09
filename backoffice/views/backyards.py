@@ -1,8 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Backyard, Organizacao
+from models import db, Backyard, Organizacao, AtletaBackyard, Atleta
 from services.image_service import ImageService
 from functools import wraps
+from sqlalchemy import func, or_, case
+from datetime import datetime, date
 
 backyards_bp = Blueprint('backyards', __name__)
 
@@ -20,28 +22,118 @@ def organizador_or_admin_required(f):
 @organizador_or_admin_required
 def list_backyards():
     page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '', type=str)
+    status_filter = request.args.get('status', '', type=str)
+    show_past = request.args.get('show_past', False, type=bool)
+    date_from = request.args.get('date_from', '', type=str)
+    date_to = request.args.get('date_to', '', type=str)
     
+    # Base query with athlete count
+    query = db.session.query(
+        Backyard,
+        func.count(AtletaBackyard.id).label('total_atletas')
+    ).outerjoin(AtletaBackyard).group_by(Backyard.id)
+    
+    # Apply search filter if provided
+    if search:
+        search_filter = or_(
+            Backyard.nome.ilike(f'%{search}%'),
+            Backyard.cidade.ilike(f'%{search}%'),
+            Backyard.estado.ilike(f'%{search}%'),
+            Backyard.descricao.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+    
+    # Apply status filter if provided
+    if status_filter:
+        if status_filter == 'ATIVO':
+            query = query.filter(Backyard.status == 'ATIVO')
+        elif status_filter == 'PREPARACAO':
+            query = query.filter(Backyard.status == 'PREPARACAO')
+        elif status_filter == 'FINALIZADO':
+            query = query.filter(Backyard.status == 'FINALIZADO')
+        elif status_filter == 'CANCELADO':
+            query = query.filter(Backyard.status == 'CANCELADO')
+    
+    # Apply date filters
+    hoje = date.today()
+    
+    # Parse date filters if provided
+    date_from_obj = None
+    date_to_obj = None
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    
+    # Apply date range filter if provided
+    if date_from_obj:
+        query = query.filter(func.date(Backyard.data_evento) >= date_from_obj)
+    if date_to_obj:
+        query = query.filter(func.date(Backyard.data_evento) <= date_to_obj)
+    
+    # If not showing past events and no specific date filter, hide past events
+    if not show_past and not date_from_obj and not date_to_obj:
+        query = query.filter(
+            or_(
+                Backyard.data_evento.is_(None),  # Events without date
+                func.date(Backyard.data_evento) >= hoje,  # Future events
+                Backyard.status == 'ATIVO'  # Active events (regardless of date)
+            )
+        )
+    
+    # Apply user role permissions
     if current_user.is_admin():
         # Admin can see all backyards
-        backyards = Backyard.query.paginate(
-            page=page, per_page=10, error_out=False
-        )
+        pass
     else:
         # Organizador can only see backyards from their organizations
         user_orgs = Organizacao.query.filter_by(organizador=current_user.id).all()
         org_ids = [org.id for org in user_orgs]
         
         if org_ids:
-            backyards = Backyard.query.filter(Backyard.organizador.in_(org_ids)).paginate(
-                page=page, per_page=10, error_out=False
-            )
+            query = query.filter(Backyard.organizador.in_(org_ids))
         else:
-            # If no organizations, return empty pagination
-            backyards = Backyard.query.filter(Backyard.id == -1).paginate(
-                page=page, per_page=10, error_out=False
-            )
+            # If no organizations, return empty results
+            query = query.filter(Backyard.id == -1)
     
-    return render_template('backyards/list.html', backyards=backyards)
+    # Smart ordering: Active events first, then by date (closest first)
+    query = query.order_by(
+        # Priority 1: Active events first
+        case(
+            (Backyard.status == 'ATIVO', 0),
+            else_=1
+        ),
+        # Priority 2: Events with dates, ordered chronologically
+        case(
+            (Backyard.data_evento.is_(None), 1),  # Events without date go last
+            else_=0
+        ),
+        Backyard.data_evento.asc(),  # Closest dates first (MySQL/MariaDB compatible)
+        Backyard.data_criacao.desc()  # Fallback: newest first
+    )
+    
+    # Paginate results
+    backyards = query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('backyards/list.html', 
+                         backyards=backyards, 
+                         search=search, 
+                         status_filter=status_filter,
+                         show_past=show_past,
+                         date_from=date_from,
+                         date_to=date_to,
+                         per_page=per_page,
+                         hoje=hoje)
 
 @backyards_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -65,6 +157,21 @@ def create_backyard():
             except ValueError:
                 flash('Invalid event date format', 'warning')
         
+        # Parse bib number configuration
+        capacidade = None
+        if request.form.get('capacidade'):
+            try:
+                capacidade = int(request.form.get('capacidade'))
+            except ValueError:
+                flash('Invalid capacity value', 'warning')
+        
+        numero_inicial = None
+        if request.form.get('numero_inicial'):
+            try:
+                numero_inicial = int(request.form.get('numero_inicial'))
+            except ValueError:
+                flash('Invalid starting bib number value', 'warning')
+        
         backyard = Backyard(
             nome=nome,
             organizador=organizador,
@@ -73,7 +180,9 @@ def create_backyard():
             cidade=cidade,
             estado=estado,
             pais=pais,
-            data_evento=data_evento
+            data_evento=data_evento,
+            capacidade=capacidade,
+            numero_inicial=numero_inicial
         )
         
         try:
@@ -211,6 +320,23 @@ def update_backyard(id):
     else:
         backyard.data_evento = None
     
+    # Parse bib number configuration
+    if request.form.get('capacidade'):
+        try:
+            backyard.capacidade = int(request.form.get('capacidade'))
+        except ValueError:
+            flash('Invalid capacity value', 'warning')
+    else:
+        backyard.capacidade = None
+    
+    if request.form.get('numero_inicial'):
+        try:
+            backyard.numero_inicial = int(request.form.get('numero_inicial'))
+        except ValueError:
+            flash('Invalid starting bib number value', 'warning')
+    else:
+        backyard.numero_inicial = None
+    
     try:
         # Handle image uploads
         image_service = ImageService()
@@ -285,11 +411,60 @@ def view_backyard(id):
         org_ids = [org.id for org in user_orgs]
         can_delete = backyard.organizador in org_ids
     
+    # Estatísticas dos números de peito
+    total_inscricoes = AtletaBackyard.query.filter_by(backyard_id=id).count()
+    inscricoes_com_numero = AtletaBackyard.query.filter_by(backyard_id=id).filter(AtletaBackyard.numero_peito.isnot(None)).count()
+    inscricoes_sem_numero = total_inscricoes - inscricoes_com_numero
+    
+    # Lista de atletas inscritos com números
+    atletas_inscritos = db.session.query(AtletaBackyard, Atleta).join(
+        Atleta, AtletaBackyard.atleta_id == Atleta.id
+    ).filter(AtletaBackyard.backyard_id == id).order_by(AtletaBackyard.numero_peito.asc()).all()
+    
     return render_template('backyards/view.html', 
                          backyard=backyard, 
                          profile_picture_url=profile_picture_url,
                          logo_url=logo_url,
-                         can_delete=can_delete)
+                         can_delete=can_delete,
+                         total_inscricoes=total_inscricoes,
+                         inscricoes_com_numero=inscricoes_com_numero,
+                         inscricoes_sem_numero=inscricoes_sem_numero,
+                         atletas_inscritos=atletas_inscritos)
+
+@backyards_bp.route('/<int:id>/gerar-numeros', methods=['POST'])
+@login_required
+@organizador_or_admin_required
+def gerar_numeros_peito(id):
+    """Gera números de peito para atletas inscritos que não possuem número"""
+    try:
+        backyard = Backyard.query.get_or_404(id)
+        
+        # Check if organizador can manage this backyard
+        if not current_user.is_admin():
+            user_orgs = Organizacao.query.filter_by(organizador=current_user.id).all()
+            org_ids = [org.id for org in user_orgs]
+            
+            if backyard.organizador not in org_ids:
+                return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+        
+        # Gerar números usando o método do modelo
+        numeros_gerados = backyard.gerar_numeros_peito()
+        
+        if numeros_gerados > 0:
+            return jsonify({
+                'success': True, 
+                'message': f'{numeros_gerados} números de peito gerados com sucesso!',
+                'numeros_gerados': numeros_gerados
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'message': 'Nenhum número foi gerado. Todos os atletas já possuem números ou a capacidade foi esgotada.'
+            })
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao gerar números: {str(e)}'}), 500
 
 @backyards_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
@@ -314,6 +489,24 @@ def delete_backyard(id):
         if backyard.logo_path:
             image_service.delete_image(backyard.logo_path)
         
+        # Delete related records in the correct order to avoid foreign key constraints
+        
+        # 1. Delete atleta_loops records for all loops of this backyard
+        from models import Loop, AtletaLoop
+        loops = Loop.query.filter_by(backyard_id=id).all()
+        loop_ids = [loop.id for loop in loops]
+        
+        if loop_ids:
+            # Delete from atleta_loops table (now correctly mapped in the model)
+            AtletaLoop.query.filter(AtletaLoop.loop_id.in_(loop_ids)).delete(synchronize_session=False)
+        
+        # 2. Delete loops
+        Loop.query.filter_by(backyard_id=id).delete()
+        
+        # 3. Delete atleta_backyard registrations
+        AtletaBackyard.query.filter_by(backyard_id=id).delete()
+        
+        # 4. Finally delete the backyard itself
         db.session.delete(backyard)
         db.session.commit()
         flash(f'Backyard {backyard.nome} deleted successfully!', 'success')

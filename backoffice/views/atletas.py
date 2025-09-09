@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from models import db, Atleta, Backyard, AtletaBackyard
 from services.image_service import ImageService
+from sqlalchemy import func, or_
 import os
 
 # Create blueprint
@@ -38,16 +39,32 @@ def organizador_or_admin_required(f):
 @login_required
 @organizador_or_admin_required
 def list():
-    """List all atletas"""
+    """List all atletas with search, pagination and backyard count"""
     page = request.args.get('page', 1, type=int)
-    per_page = 10
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '', type=str)
     
-    # Build query based on user role
+    # Base query with backyard count
+    query = db.session.query(
+        Atleta,
+        func.count(AtletaBackyard.id).label('total_backyards')
+    ).outerjoin(AtletaBackyard).group_by(Atleta.id)
+    
+    # Apply search filter if provided
+    if search:
+        search_filter = or_(
+            Atleta.nome.ilike(f'%{search}%'),
+            Atleta.email.ilike(f'%{search}%'),
+            Atleta.cpf.ilike(f'%{search}%'),
+            Atleta.cidade.ilike(f'%{search}%'),
+            Atleta.estado.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+    
+    # Apply user role permissions
     if current_user.profile.nome == 'Admin':
         # Admin can see all atletas
-        atletas = Atleta.query.paginate(
-            page=page, per_page=per_page, error_out=False
-        )
+        pass
     else:
         # Organizador can see atletas inscribed in their backyards
         user_orgs = [org.id for org in current_user.organizacoes]
@@ -55,11 +72,20 @@ def list():
             Backyard.organizador.in_(user_orgs)
         ).distinct().subquery()
         
-        atletas = Atleta.query.filter(
-            Atleta.id.in_(atletas_ids)
-        ).paginate(page=page, per_page=per_page, error_out=False)
+        query = query.filter(Atleta.id.in_(atletas_ids))
     
-    return render_template('atletas/list.html', atletas=atletas)
+    # Order by creation date (newest first)
+    query = query.order_by(Atleta.criado_em.desc())
+    
+    # Paginate results
+    atletas = query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('atletas/list.html', 
+                         atletas=atletas, 
+                         search=search, 
+                         per_page=per_page)
 
 @atletas_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -74,6 +100,7 @@ def create():
             email = request.form['email']
             password = request.form['password']
             data_nascimento = request.form.get('data_nascimento')
+            sexo = request.form.get('sexo')
             endereco = request.form.get('endereco')
             cidade = request.form.get('cidade')
             estado = request.form.get('estado')
@@ -147,6 +174,7 @@ def create():
                 email=email,
                 password=generate_password_hash(password),
                 data_nascimento=data_nascimento_obj,
+                sexo=sexo if sexo else None,
                 imagem_perfil=imagem_perfil,
                 endereco=endereco,
                 cidade=cidade,
@@ -207,6 +235,7 @@ def edit(id):
             cpf = request.form['cpf']
             email = request.form['email']
             data_nascimento = request.form.get('data_nascimento')
+            sexo = request.form.get('sexo')
             endereco = request.form.get('endereco')
             cidade = request.form.get('cidade')
             estado = request.form.get('estado')
@@ -291,6 +320,7 @@ def edit(id):
             atleta.cpf = cpf
             atleta.email = email
             atleta.data_nascimento = data_nascimento_obj
+            atleta.sexo = sexo if sexo else None
             atleta.endereco = endereco
             atleta.cidade = cidade
             atleta.estado = estado

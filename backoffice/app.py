@@ -1,7 +1,8 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+# Multi-language support - manual implementation
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from functools import wraps
@@ -9,6 +10,57 @@ from functools import wraps
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Multi-language configuration
+app.config['LANGUAGES'] = {
+    'pt': 'Português (Brasil)',
+    'en': 'English',
+    'es': 'Español'
+}
+app.config['DEFAULT_LANGUAGE'] = 'pt'
+
+# Translation dictionaries
+TRANSLATIONS = {
+    'pt': {
+        'Home': 'Home',
+        'Dashboard': 'Dashboard',
+        'Users': 'Usuários',
+        'Profiles': 'Perfis',
+        'Organizations': 'Organizações',
+        'Backyards': 'Backyards',
+        'Athletes': 'Atletas',
+        'Logout': 'Sair',
+        'Selecionar Idioma': 'Selecionar Idioma'
+    },
+    'en': {
+        'Home': 'Home',
+        'Dashboard': 'Dashboard',
+        'Users': 'Users',
+        'Profiles': 'Profiles',
+        'Organizations': 'Organizations',
+        'Backyards': 'Backyards',
+        'Athletes': 'Athletes',
+        'Logout': 'Logout',
+        'Selecionar Idioma': 'Select Language'
+    },
+    'es': {
+        'Home': 'Inicio',
+        'Dashboard': 'Panel',
+        'Users': 'Usuarios',
+        'Profiles': 'Perfiles',
+        'Organizations': 'Organizaciones',
+        'Backyards': 'Backyards',
+        'Athletes': 'Atletas',
+        'Logout': 'Cerrar Sesión',
+        'Selecionar Idioma': 'Seleccionar Idioma'
+    }
+}
+
+# Translation function
+def _(text, lang=None):
+    if not lang:
+        lang = session.get('language', app.config['DEFAULT_LANGUAGE'])
+    return TRANSLATIONS.get(lang, {}).get(text, text)
 
 # Database configuration
 DB_HOST = os.environ.get('DB_HOST', 'mariadb')
@@ -34,6 +86,35 @@ login_manager.login_message_category = 'info'
 @login_manager.user_loader
 def load_user(user_id):
     return Backend_Users.query.get(int(user_id))
+
+# Language detection function
+def get_current_language():
+    # 1. Check if user manually selected language via URL parameter
+    if request.args.get('lang'):
+        session['language'] = request.args.get('lang')
+    
+    # 2. Return language from session if set
+    if 'language' in session and session['language'] in app.config['LANGUAGES']:
+        return session['language']
+    
+    # 3. Check user's browser preferred languages
+    return request.accept_languages.best_match(app.config['LANGUAGES'].keys()) or app.config['DEFAULT_LANGUAGE']
+
+# Language switcher route
+@app.route('/set_language/<language>')
+def set_language(language):
+    if language in app.config['LANGUAGES']:
+        session['language'] = language
+    return redirect(request.referrer or url_for('dashboard'))
+
+# Make language functions and translation available in templates
+@app.context_processor
+def inject_conf_vars():
+    return {
+        'LANGUAGES': app.config['LANGUAGES'],
+        'CURRENT_LANGUAGE': session.get('language', app.config['DEFAULT_LANGUAGE']),
+        '_': _  # Make translation function available in templates
+    }
 
 # Decorators for role-based access
 def admin_required(f):
@@ -132,12 +213,14 @@ from views.profiles import profiles_bp
 from views.organizacoes import organizacoes_bp
 from views.backyards import backyards_bp
 from views.atletas import atletas_bp
+from views.loops import loops_bp
 
 app.register_blueprint(users_bp, url_prefix='/users')
 app.register_blueprint(profiles_bp, url_prefix='/profiles')
 app.register_blueprint(organizacoes_bp, url_prefix='/organizacoes')
 app.register_blueprint(backyards_bp, url_prefix='/backyards')
 app.register_blueprint(atletas_bp, url_prefix='/atletas')
+app.register_blueprint(loops_bp, url_prefix='/loops')
 
 # Database initialization is handled by init_db.py
 

@@ -78,7 +78,7 @@
         </div>
 
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <strong><i class="fas fa-birthday-cake mr-1"></i> Data de Nascimento</strong>
             <p class="text-muted">
               {% if atleta.data_nascimento %}
@@ -88,7 +88,22 @@
               {% endif %}
             </p>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
+            <strong><i class="fas fa-user mr-1"></i> Sexo/Gênero</strong>
+            <p class="text-muted">
+              {% if atleta.sexo %}
+                {% if atleta.sexo == 'masculino' %}Masculino
+                {% elif atleta.sexo == 'feminino' %}Feminino
+                {% elif atleta.sexo == 'nao_binario' %}Não-binário
+                {% elif atleta.sexo == 'prefiro_nao_informar' %}Prefere não informar
+                {% else %}{{ atleta.sexo }}
+                {% endif %}
+              {% else %}
+                Não informado
+              {% endif %}
+            </p>
+          </div>
+          <div class="col-md-4">
             <strong><i class="fas fa-calendar mr-1"></i> Cadastrado em</strong>
             <p class="text-muted">{{ atleta.criado_em.strftime('%d/%m/%Y às %H:%M') }}</p>
           </div>
