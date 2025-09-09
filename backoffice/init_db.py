@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, '/app')
 
 from app import app
-from models import db, Backend_Users, Profile, Organizacao, Backyard
+from models import db, Backend_Users, Profile, Organizacao, Backyard, Atleta, AtletaBackyard, Loop, AtletaLoop
 from werkzeug.security import generate_password_hash
 
 def init_database():

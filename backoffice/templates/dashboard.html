@@ -14,15 +14,30 @@
   {% if current_user.is_admin() %}
   <div class="col-lg-4 col-4">
     <!-- small box -->
+    <div class="small-box bg-warning">
+      <div class="inner">
+        <h3>{{ stats.total_backyards }}</h3>
+        <p>Total de Backyards</p>
+      </div>
+      <div class="icon">
+        <i class="ion ion-location"></i>
+      </div>
+      <a href="{{ url_for('backyards.list_backyards') }}" class="small-box-footer">Mais detalhes <i class="fas fa-arrow-circle-right"></i></a>
+    </div>
+  </div>
+  <!-- ./col -->
+
+  <div class="col-lg-4 col-4">
+    <!-- small box -->
     <div class="small-box bg-info">
       <div class="inner">
         <h3>{{ stats.total_users }}</h3>
-        <p>Total Users</p>
+        <p>Total de Atletas</p>
       </div>
       <div class="icon">
         <i class="ion ion-person-add"></i>
       </div>
-      <a href="{{ url_for('users.list_users') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+      <a href="{{ url_for('users.list_users') }}" class="small-box-footer">Mais detalhes <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
   <!-- ./col -->
@@ -31,26 +46,12 @@
     <div class="small-box bg-success">
       <div class="inner">
         <h3>{{ stats.total_organizacoes }}</h3>
-        <p>Organizations</p>
+        <p>Organizações</p>
       </div>
       <div class="icon">
         <i class="ion ion-stats-bars"></i>
       </div>
-      <a href="{{ url_for('organizacoes.list_organizacoes') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-    </div>
-  </div>
-  <!-- ./col -->
-  <div class="col-lg-4 col-4">
-    <!-- small box -->
-    <div class="small-box bg-warning">
-      <div class="inner">
-        <h3>{{ stats.total_backyards }}</h3>
-        <p>Total Backyards</p>
-      </div>
-      <div class="icon">
-        <i class="ion ion-location"></i>
-      </div>
-      <a href="{{ url_for('backyards.list_backyards') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+      <a href="{{ url_for('organizacoes.list_organizacoes') }}" class="small-box-footer">Mais detalhes <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
   <!-- ./col -->
@@ -61,12 +62,12 @@
     <div class="small-box bg-success">
       <div class="inner">
         <h3>{{ stats.my_organizacoes }}</h3>
-        <p>My Organizations</p>
+        <p>Minhas organizações</p>
       </div>
       <div class="icon">
         <i class="ion ion-stats-bars"></i>
       </div>
-      <a href="{{ url_for('organizacoes.list_organizacoes') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+      <a href="{{ url_for('organizacoes.list_organizacoes') }}" class="small-box-footer">Mais detalhes <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
   <!-- ./col -->
@@ -75,12 +76,12 @@
     <div class="small-box bg-warning">
       <div class="inner">
         <h3>{{ stats.my_backyards }}</h3>
-        <p>My Backyards</p>
+        <p>Minhas backyards</p>
       </div>
       <div class="icon">
         <i class="ion ion-location"></i>
       </div>
-      <a href="{{ url_for('backyards.list_backyards') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+      <a href="{{ url_for('backyards.list_backyards') }}" class="small-box-footer">Mais detalhes <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
   <!-- ./col -->
@@ -97,7 +98,7 @@
       <div class="card-header">
         <h3 class="card-title">
           <i class="fas fa-chart-pie mr-1"></i>
-          Quick Actions
+          Ações rápidas
         </h3>
       </div><!-- /.card-header -->
       <div class="card-body">
@@ -107,10 +108,10 @@
             <div class="info-box">
               <span class="info-box-icon bg-info"><i class="far fa-user"></i></span>
               <div class="info-box-content">
-                <span class="info-box-text">Create User</span>
+                <span class="info-box-text">Novo usuário</span>
                 <span class="info-box-number">
                   <a href="{{ url_for('users.create_user') }}" class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus"></i> Add User
+                    <i class="fas fa-plus"></i> Adicionar usuário
                   </a>
                 </span>
               </div>
@@ -120,10 +121,10 @@
             <div class="info-box">
               <span class="info-box-icon bg-success"><i class="far fa-building"></i></span>
               <div class="info-box-content">
-                <span class="info-box-text">Create Organization</span>
+                <span class="info-box-text">Criar Organização</span>
                 <span class="info-box-number">
                   <a href="{{ url_for('organizacoes.create_organizacao') }}" class="btn btn-sm btn-success">
-                    <i class="fas fa-plus"></i> Add Organization
+                    <i class="fas fa-plus"></i> Adicionar Organização
                   </a>
                 </span>
               </div>
@@ -135,10 +136,10 @@
             <div class="info-box">
               <span class="info-box-icon bg-warning"><i class="far fa-map"></i></span>
               <div class="info-box-content">
-                <span class="info-box-text">Create Backyard</span>
+                <span class="info-box-text">Criar Backyard</span>
                 <span class="info-box-number">
                   <a href="{{ url_for('backyards.create_backyard') }}" class="btn btn-sm btn-warning">
-                    <i class="fas fa-plus"></i> Add Backyard
+                    <i class="fas fa-plus"></i> Adicionar Backyard
                   </a>
                 </span>
               </div>
@@ -155,63 +156,24 @@
   <!-- right col (We are only adding the ID to make the widgets sortable)-->
   <section class="col-lg-9 connectedSortable">
     <!-- Map card -->
-    <div class="card bg-gradient-primary">
+    <div class="card bg-gradient-light">
       <div class="card-header border-0">
         <h3 class="card-title">
           <i class="fas fa-user mr-1"></i>
-          User Information
+          Próximas Backyards - as próximas 10 !!!!!!! 
         </h3>
       </div>
       <div class="card-body">
         <div class="d-flex">
           <p class="d-flex flex-column">
-            <span class="text-bold text-lg">{{ current_user.nome }}</span>
-            <span>{{ current_user.email }}</span>
+            <span class="text-bold text-lg">Próximas Backyards</span>
           </p>
-        </div>
-        <!-- /.d-flex -->
-
-        <div class="d-flex flex-row justify-content-end">
-          <span class="mr-2">
-            <span class="text-white">Profile:</span>
-            <i class="fas fa-user-tag text-white"></i>
-          </span>
-          <span class="text-white">{{ current_user.profile.nome }}</span>
         </div>
         <!-- /.d-flex -->
       </div>
     </div>
     <!-- /.card -->
 
-    <!-- Calendar -->
-    <div class="card bg-gradient-success">
-      <div class="card-header border-0">
-        <h3 class="card-title">
-          <i class="far fa-calendar-alt"></i>
-          System Information
-        </h3>
-      </div>
-      <!-- /.card-header -->
-      <div class="card-body pt-0">
-        <!-- The calendar -->
-        <div class="d-flex">
-          <p class="d-flex flex-column">
-            <span class="text-bold text-lg">BTL Backoffice</span>
-            <span>Version 1.0.0</span>
-          </p>
-        </div>
-        <!-- /.d-flex -->
-        <div class="d-flex flex-row justify-content-end">
-          <span class="mr-2">
-            <span class="text-white">Status:</span>
-            <i class="fas fa-circle text-white"></i>
-          </span>
-          <span class="text-white">Online</span>
-        </div>
-      </div>
-      <!-- /.card-body -->
-    </div>
-    <!-- /.card -->
   </section>
   <!-- right col -->
 </div>

@@ -1,0 +1,764 @@
+{% extends "base.html" %}
+
+{% block title %}{{ backyard.nome }} - Controle de Loops{% endblock %}
+
+
+{% block content %}
+<div class="row mb-2">
+  <div class="col-sm-8">
+    <h1 class="m-0">
+      🏃‍♂️ {{ backyard.nome }}
+      {% if backyard.status.value == 'ATIVO' %}
+        <span class="badge badge-success ml-2">🟢 AO VIVO</span>
+      {% elif backyard.status.value == 'PREPARACAO' %}
+        <span class="badge badge-warning ml-2">🟡 PREPARAÇÃO</span>
+      {% elif backyard.status.value == 'FINALIZADO' %}
+        <span class="badge badge-danger ml-2">🔴 FINALIZADO</span>
+      {% endif %}
+    </h1>
+    <p class="text-muted">
+      <i class="fas fa-map-marker-alt"></i> {{ backyard.cidade }}, {{ backyard.estado }}
+      {% if backyard.data_evento %}
+        | <i class="fas fa-calendar"></i> {{ backyard.data_evento.strftime('%d/%m/%Y') }}
+      {% endif %}
+    </p>
+  </div>
+  <div class="col-sm-4">
+    <ol class="breadcrumb float-sm-right">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('backyards.list_backyards') }}">Backyards</a></li>
+      <li class="breadcrumb-item active">{{ backyard.nome }}</li>
+    </ol>
+  </div>
+</div>
+
+<!-- Estatísticas Gerais -->
+<div class="row">
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-info">
+      <div class="inner">
+        <h3>{{ total_atletas_inscritos }}</h3>
+        <p>Atletas Inscritos</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-person-running"></i>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-success">
+      <div class="inner">
+        <h3>{{ total_loops }}</h3>
+        <p>Loop atual</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-rotate-left"></i>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-warning">
+      <div class="inner">
+        <h3>{{ atletas_ativos }}</h3>
+        <p>Atletas Ativos</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-running"></i>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-3 col-6">
+    <div class="small-box bg-danger">
+      <div class="inner">
+        <h3>{{ total_loops_finalizados }}</h3>
+        <p>Loops Finalizados</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-flag-checkered"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Números de Peito - só mostra se há atletas sem números -->
+{% if inscricoes_sem_numero > 0 %}
+<div class="row">
+  <div class="col-lg-4 col-6">
+    <div class="small-box bg-info">
+      <div class="inner">
+        <h3>{{ inscricoes_com_numero }}</h3>
+        <p>Com Número de Peito</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-hashtag"></i>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4 col-6">
+    <div class="small-box bg-warning">
+      <div class="inner">
+        <h3>{{ inscricoes_sem_numero }}</h3>
+        <p>Sem Número de Peito</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-question"></i>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4 col-12">
+    <div class="small-box bg-success">
+      <div class="inner">
+        <h3>
+          <button type="button" class="btn btn-light btn-sm" id="btn-gerar-numeros" data-backyard-id="{{ backyard.id }}">
+            <i class="fas fa-magic"></i> Gerar Números
+          </button>
+        </h3>
+        <p>Números de Peito</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-magic"></i>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Loop Atual em Destaque -->
+{% if loop_atual %}
+<div class="row">
+  <div class="col-12">
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-trophy"></i> 
+                <strong>Loop Atual: #{{ loop_atual.numero_loop }}</strong>
+                {% if loop_atual.status.value == 'ATIVO' %}
+                  <span class="badge badge-success ml-2">🔴 EM ANDAMENTO</span>
+                {% elif loop_atual.status.value == 'PREPARACAO' %}
+                  <span class="badge badge-warning ml-2">🟡 PREPARAÇÃO</span>
+                {% elif loop_atual.status.value == 'FINALIZADO' %}
+                  <span class="badge badge-secondary ml-2">✅ FINALIZADO</span>
+                {% endif %}
+              </h3>
+              <div class="card-tools">
+                {% if loop_atual.data_inicio %}
+                  <span class="text-muted mr-3">
+                    <i class="fas fa-clock"></i> 
+                    Início: {{ loop_atual.data_inicio.strftime('%H:%M:%S') }}
+                  </span>
+                {% endif %}
+                
+                <!-- Botões de Controle do Loop -->
+                {% if loop_atual.status.value == 'PREPARACAO' %}
+                  <button type="button" 
+                          class="btn btn-success btn-sm btn-iniciar-loop" 
+                          data-loop-id="{{ loop_atual.id }}"
+                          title="Iniciar este loop">
+                    <i class="fas fa-play"></i> Iniciar Loop
+                  </button>
+                {% elif loop_atual.status.value == 'ATIVO' %}
+                  <button type="button" 
+                          class="btn btn-warning btn-sm btn-finalizar-loop" 
+                          data-loop-id="{{ loop_atual.id }}"
+                          title="Finalizar este loop e criar o próximo">
+                    <i class="fas fa-flag-checkered"></i> Finalizar Loop
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="info-box bg-light">
+                    <span class="info-box-icon bg-success"><i class="fas fa-play"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Ativos</span>
+                      <span class="info-box-number">{{ atletas_ativos }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="info-box bg-light">
+                    <span class="info-box-icon bg-primary"><i class="fas fa-check"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Concluídos</span>
+                      <span class="info-box-number">{{ atletas_concluidos }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="info-box bg-light">
+                    <span class="info-box-icon bg-danger"><i class="fas fa-times"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Eliminados</span>
+                      <span class="info-box-number">{{ atletas_eliminados }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="info-box bg-light">
+                    <span class="info-box-icon bg-info"><i class="fas fa-percentage"></i></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Taxa Conclusão</span>
+                      <span class="info-box-number">
+                        {% if (atletas_ativos + atletas_concluidos + atletas_eliminados) > 0 %}
+                          {{ "%.1f"|format((atletas_concluidos / (atletas_ativos + atletas_concluidos + atletas_eliminados)) * 100) }}%
+                        {% else %}
+                          0%
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <!-- Quando não há loop atual - mostrar botão para iniciar evento -->
+      {% if backyard.status.value == 'PREPARACAO' %}
+      <div class="row">
+        <div class="col-12">
+          <div class="card card-warning card-outline">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-play-circle"></i> 
+                <strong>Evento Pronto para Iniciar</strong>
+              </h3>
+            </div>
+            <div class="card-body text-center">
+              <p class="lead">O evento está em preparação. Clique no botão abaixo para criar e iniciar o primeiro loop.</p>
+              <button type="button" 
+                      class="btn btn-success btn-lg btn-iniciar-evento" 
+                      data-backyard-id="{{ backyard.id }}">
+                <i class="fas fa-flag"></i> Iniciar Evento (Loop 1)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+
+      <!-- Atletas do Loop Atual -->
+      {% if atletas_loop_atual %}
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-users"></i> 
+                Atletas do Loop {{ loop_atual.numero_loop if loop_atual else 'Atual' }}
+              </h3>
+              <div class="card-tools">
+                <span class="badge badge-info">{{ atletas_loop_atual|length }} atletas</span>
+              </div>
+            </div>
+            <div class="card-body table-responsive p-0">
+              <table class="table table-hover text-nowrap">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Nº</th>
+                    <th>Atleta</th>
+                    <th>Status</th>
+                    <th>Tempo</th>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th>Ações Rápidas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for atleta_loop, atleta, atleta_backyard in atletas_loop_atual %}
+                  <tr class="
+                    {% if atleta_loop.status.value == 'ATIVO' %}table-success
+                    {% elif atleta_loop.status.value == 'CONCLUIDO' %}table-info
+                    {% elif atleta_loop.status.value == 'ELIMINADO' %}table-danger
+                    {% elif atleta_loop.status.value == 'DNF' %}table-warning
+                    {% elif atleta_loop.status.value == 'DNS' %}table-secondary
+                    {% endif %}
+                  ">
+                    <td>{{ loop.index }}</td>
+                    <td>
+                      {% if atleta_backyard.numero_peito %}
+                        <span class="badge badge-primary">#{{ atleta_backyard.numero_peito }}</span>
+                      {% else %}
+                        <span class="badge badge-secondary">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <strong>{{ atleta.nome }}</strong>
+                      <br><small class="text-muted">{{ atleta.cidade }}</small>
+                    </td>
+                    <td>
+                      {% if atleta_loop.status.value == 'ATIVO' %}
+                        <span class="badge badge-success">🏃‍♂️ ATIVO</span>
+                      {% elif atleta_loop.status.value == 'CONCLUIDO' %}
+                        <span class="badge badge-primary">✅ CONCLUÍDO</span>
+                      {% elif atleta_loop.status.value == 'ELIMINADO' %}
+                        <span class="badge badge-danger">❌ ELIMINADO</span>
+                      {% elif atleta_loop.status.value == 'DNF' %}
+                        <span class="badge badge-warning">⚠️ DNF</span>
+                      {% elif atleta_loop.status.value == 'DNS' %}
+                        <span class="badge badge-secondary">⏸️ DNS</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if atleta_loop.status.value == 'CONCLUIDO' and atleta_loop.tempo_total_segundos %}
+                        <strong>{{ atleta_loop.get_tempo_formatado() }}</strong>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if atleta_loop.data_inicio %}
+                        {{ atleta_loop.data_inicio.strftime('%H:%M:%S') }}
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if atleta_loop.data_fim %}
+                        {{ atleta_loop.data_fim.strftime('%H:%M:%S') }}
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if atleta_loop.status.value == 'ATIVO' %}
+                        <div class="btn-group" role="group">
+                          <button type="button" 
+                                  class="btn btn-success btn-sm btn-concluir" 
+                                  data-atleta-loop-id="{{ atleta_loop.id }}"
+                                  data-atleta-nome="{{ atleta.nome }}"
+                                  title="Marcar como concluído">
+                            <i class="fas fa-check"></i> Chegou
+                          </button>
+                          <button type="button" 
+                                  class="btn btn-danger btn-sm btn-eliminar" 
+                                  data-atleta-loop-id="{{ atleta_loop.id }}"
+                                  data-atleta-nome="{{ atleta.nome }}"
+                                  title="Marcar como eliminado">
+                            <i class="fas fa-times"></i> Eliminar
+                          </button>
+                        </div>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Navegação entre Loops -->
+      {% if loops %}
+      <div class="row">
+        <div class="col-12">
+          <div class="card card-secondary collapsed-card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-history"></i> 
+                Histórico de Loops ({{ total_loops }} loops)
+              </h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="loopSelect">Ir para Loop:</label>
+                  <select id="loopSelect" class="form-control" onchange="goToLoop(this.value)">
+                    <option value="">Selecione um loop...</option>
+                    {% for current_loop in loops %}
+                      <option value="{{ current_loop.numero_loop }}" 
+                              {% if loop_atual and current_loop.id == loop_atual.id %}selected{% endif %}>
+                        Loop #{{ current_loop.numero_loop }} 
+                        ({{ current_loop.status.value }})
+                        {% if current_loop.data_inicio %}
+                          - {{ current_loop.data_inicio.strftime('%d/%m %H:%M') }}
+                        {% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Loop</th>
+                      <th>Status</th>
+                      <th>Início</th>
+                      <th>Fim</th>
+                      <th>Atletas Concluídos</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for current_loop in loops_recentes %}
+                    <tr>
+                      <td><strong>#{{ current_loop.numero_loop }}</strong></td>
+                      <td>
+                        {% if current_loop.status.value == 'ATIVO' %}
+                          <span class="badge badge-success">ATIVO</span>
+                        {% elif current_loop.status.value == 'PREPARACAO' %}
+                          <span class="badge badge-warning">PREPARAÇÃO</span>
+                        {% elif current_loop.status.value == 'FINALIZADO' %}
+                          <span class="badge badge-secondary">FINALIZADO</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if current_loop.data_inicio %}
+                          {{ current_loop.data_inicio.strftime('%d/%m %H:%M') }}
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if current_loop.data_fim %}
+                          {{ current_loop.data_fim.strftime('%d/%m %H:%M') }}
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ current_loop.get_atletas_concluidos()|length }}</td>
+                      <td>
+                        <a href="{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=current_loop.numero_loop) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-eye"></i> Ver
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Função para ações rápidas dos atletas
+$(document).ready(function() {
+  // Botão Concluir
+  $('.btn-concluir').click(function() {
+    const atletaLoopId = $(this).data('atleta-loop-id');
+    const atletaNome = $(this).data('atleta-nome');
+    const button = $(this);
+    const row = button.closest('tr');
+    
+    console.log('Clicou no botão Chegou:', {atletaLoopId, atletaNome});
+    
+    // Desabilitar botão durante a requisição
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Processando...');
+    
+    $.ajax({
+      url: `/loops/atleta/${atletaLoopId}/concluir`,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          // Atualizar visualmente a linha
+          row.removeClass('table-success').addClass('table-info');
+          
+          // Atualizar status
+          const statusCell = row.find('td:nth-child(4)');
+          statusCell.html('<span class="badge badge-primary">✅ CONCLUÍDO</span>');
+          
+          // Atualizar tempo
+          const tempoCell = row.find('td:nth-child(5)');
+          tempoCell.html(`<strong>${response.tempo_formatado}</strong>`);
+          
+          // Remover botões de ação
+          const acaoCell = row.find('td:nth-child(8)');
+          acaoCell.html('<span class="text-muted">-</span>');
+          
+          // Verificar se o evento foi finalizado (loop solo)
+          if (response.event_finished) {
+            // Mostrar notificação especial de vitória
+            showNotification(response.message, 'success');
+            
+            // Recarregar a página após 3 segundos para mostrar o estado final
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
+            
+            // Desabilitar todos os botões de ação
+            $('.btn-concluir, .btn-eliminar').prop('disabled', true);
+            
+          } else {
+            // Mostrar notificação normal
+            showNotification(`${atletaNome} marcado como concluído!`, 'success');
+            
+            // Reordenar tabela (mover para baixo)
+            setTimeout(() => {
+              const tbody = row.parent();
+              row.detach().appendTo(tbody);
+            }, 1000);
+          }
+        } else {
+          showNotification(response.message, 'error');
+          // Restaurar botão
+          button.prop('disabled', false);
+          button.html('<i class="fas fa-check"></i> Chegou');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Erro na requisição AJAX:', {xhr, status, error});
+        showNotification('Erro ao processar solicitação: ' + error, 'error');
+        // Restaurar botão
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-check"></i> Chegou');
+      }
+    });
+  });
+  
+  // Botão Eliminar
+  $('.btn-eliminar').click(function() {
+    const atletaLoopId = $(this).data('atleta-loop-id');
+    const atletaNome = $(this).data('atleta-nome');
+    const button = $(this);
+    const row = button.closest('tr');
+    
+    // Desabilitar botão durante a requisição
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Processando...');
+    
+    $.ajax({
+      url: `/loops/atleta/${atletaLoopId}/eliminar`,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          // Atualizar visualmente a linha
+          row.removeClass('table-success').addClass('table-danger');
+          
+          // Atualizar status
+          const statusCell = row.find('td:nth-child(4)');
+          statusCell.html('<span class="badge badge-danger">❌ ELIMINADO</span>');
+          
+          // Remover botões de ação
+          const acaoCell = row.find('td:nth-child(8)');
+          acaoCell.html('<span class="text-muted">-</span>');
+          
+          // Mostrar notificação
+          showNotification(`${atletaNome} foi eliminado`, 'warning');
+          
+          // Mover para o final da tabela
+          setTimeout(() => {
+            const tbody = row.parent();
+            row.detach().appendTo(tbody);
+          }, 1000);
+        } else {
+          showNotification(response.message, 'error');
+          // Restaurar botão
+          button.prop('disabled', false);
+          button.html('<i class="fas fa-times"></i> Eliminar');
+        }
+      },
+      error: function() {
+        showNotification('Erro ao processar solicitação', 'error');
+        // Restaurar botão
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-times"></i> Eliminar');
+      }
+    });
+  });
+  
+  // Botão Iniciar Loop
+  $('.btn-iniciar-loop').click(function() {
+    const loopId = $(this).data('loop-id');
+    const button = $(this);
+    
+    if (!confirm('Tem certeza que deseja iniciar este loop?')) {
+      return;
+    }
+    
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Iniciando...');
+    
+    $.ajax({
+      url: `/loops/loop/${loopId}/start`,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          showNotification(response.message, 'success');
+          // Recarregar a página para atualizar o status
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          showNotification(response.message, 'error');
+          button.prop('disabled', false);
+          button.html('<i class="fas fa-play"></i> Iniciar Loop');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Erro ao iniciar loop:', {xhr, status, error});
+        showNotification('Erro ao iniciar loop: ' + error, 'error');
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-play"></i> Iniciar Loop');
+      }
+    });
+  });
+  
+  // Botão Finalizar Loop
+  $('.btn-finalizar-loop').click(function() {
+    const loopId = $(this).data('loop-id');
+    const button = $(this);
+    
+    if (!confirm('Tem certeza que deseja finalizar este loop e criar o próximo?')) {
+      return;
+    }
+    
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Finalizando...');
+    
+    $.ajax({
+      url: `/loops/loop/${loopId}/create_next`,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          showNotification(response.message, 'success');
+          // Recarregar a página para mostrar o novo loop
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else {
+          showNotification(response.message, 'error');
+          button.prop('disabled', false);
+          button.html('<i class="fas fa-flag-checkered"></i> Finalizar Loop');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Erro ao finalizar loop:', {xhr, status, error});
+        showNotification('Erro ao finalizar loop: ' + error, 'error');
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-flag-checkered"></i> Finalizar Loop');
+      }
+    });
+  });
+  
+  // Botão Iniciar Evento (criar primeiro loop)
+  $('.btn-iniciar-evento').click(function() {
+    const backyardId = $(this).data('backyard-id');
+    const button = $(this);
+    
+    if (!confirm('Tem certeza que deseja iniciar o evento? Isso criará o primeiro loop.')) {
+      return;
+    }
+    
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Iniciando Evento...');
+    
+    $.ajax({
+      url: `/loops/backyard/${backyardId}/start`,
+      method: 'POST',
+      success: function(response) {
+        showNotification('Evento iniciado com sucesso!', 'success');
+        // Recarregar a página para mostrar o primeiro loop
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      },
+      error: function(xhr, status, error) {
+        console.error('Erro ao iniciar evento:', {xhr, status, error});
+        showNotification('Erro ao iniciar evento: ' + error, 'error');
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-flag"></i> Iniciar Evento (Loop 1)');
+      }
+    });
+  });
+  
+  // Botão Gerar Números de Peito
+  $('#btn-gerar-numeros').click(function() {
+    const backyardId = $(this).data('backyard-id');
+    const button = $(this);
+    
+    if (!confirm('Tem certeza que deseja gerar números de peito para todos os atletas inscritos?')) {
+      return;
+    }
+    
+    // Desabilitar botão durante a requisição
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Gerando...');
+    
+    $.ajax({
+      url: `/backyards/${backyardId}/gerar-numeros`,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          // Mostrar mensagem de sucesso
+          showNotification(response.message, 'success');
+          
+          // Recarregar a página após 2 segundos para mostrar os números gerados
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else {
+          showNotification(response.message, 'warning');
+          // Restaurar botão
+          button.prop('disabled', false);
+          button.html('<i class="fas fa-magic"></i> Gerar Números');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Erro ao gerar números:', {xhr, status, error});
+        showNotification('Erro ao gerar números de peito: ' + error, 'error');
+        // Restaurar botão
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-magic"></i> Gerar Números');
+      }
+    });
+  });
+});
+
+// Função para mostrar notificações
+function showNotification(message, type) {
+  const alertClass = type === 'success' ? 'alert-success' : 
+                    type === 'warning' ? 'alert-warning' : 'alert-danger';
+  
+  const notification = $(`
+    <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+      ${message}
+      <button type="button" class="close" data-dismiss="alert">
+        <span>&times;</span>
+      </button>
+    </div>
+  `);
+  
+  $('body').append(notification);
+  
+  // Auto-remover após 3 segundos
+  setTimeout(() => {
+    notification.alert('close');
+  }, 3000);
+}
+
+function goToLoop(loopNumber) {
+  if (loopNumber) {
+    window.location.href = "{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=0) }}".replace('0', loopNumber);
+  }
+}
+</script>
+{% endblock %}

@@ -2,7 +2,7 @@
 
 {% block title %}Backyards - BTL Backoffice{% endblock %}
 
-{% block page_title %}Backyards Management{% endblock %}
+{% block page_title %}Gerenciamento de Backyards{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
@@ -14,77 +14,209 @@
   <div class="col-12">
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Backyards List</h3>
+        <h3 class="card-title">Lista de Backyards</h3>
         <div class="card-tools">
           <a href="{{ url_for('backyards.create_backyard') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus"></i> Add Backyard
+            <i class="fas fa-plus"></i> Adicionar Backyard
           </a>
         </div>
       </div>
       <!-- /.card-header -->
+      
+      <!-- Seção de Busca e Filtros -->
+      <div class="card-body">
+        <form method="GET" class="mb-3">
+          <!-- Primeira linha: Busca, Paginação e Status -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Buscar por nome, cidade, estado ou descrição..." 
+                       value="{{ search }}">
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i> Buscar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <select name="per_page" class="form-control" onchange="this.form.submit()">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10 por página</option>
+                <option value="25" {% if per_page == 25 %}selected{% endif %}>25 por página</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50 por página</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100 por página</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="status" class="form-control" onchange="this.form.submit()">
+                <option value="">Todos os Status</option>
+                <option value="ATIVO" {% if status_filter == 'ATIVO' %}selected{% endif %}>🟢 AO VIVO</option>
+                <option value="PREPARACAO" {% if status_filter == 'PREPARACAO' %}selected{% endif %}>🟡 Preparação</option>
+                <option value="FINALIZADO" {% if status_filter == 'FINALIZADO' %}selected{% endif %}>🔴 Finalizado</option>
+                <option value="CANCELADO" {% if status_filter == 'CANCELADO' %}selected{% endif %}>⚫ Cancelado</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              {% if search or status_filter or show_past or date_from or date_to %}
+                <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-secondary">
+                  <i class="fas fa-times"></i> Limpar Filtros
+                </a>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Segunda linha: Filtros de Data -->
+          <div class="row">
+            <div class="col-md-3">
+              <label class="form-label text-sm">Data de Início:</label>
+              <input type="date" name="date_from" class="form-control form-control-sm" 
+                     value="{{ date_from }}" onchange="this.form.submit()">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-sm">Data de Fim:</label>
+              <input type="date" name="date_to" class="form-control form-control-sm" 
+                     value="{{ date_to }}" onchange="this.form.submit()">
+            </div>
+            <div class="col-md-3">
+              <div class="form-check mt-4">
+                <input type="checkbox" name="show_past" value="1" class="form-check-input" 
+                       {% if show_past %}checked{% endif %} onchange="this.form.submit()" id="show_past">
+                <label class="form-check-label" for="show_past">
+                  <i class="fas fa-history"></i> Mostrar eventos passados
+                </label>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mt-4">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle"></i> 
+                  Por padrão, apenas eventos futuros e ativos são exibidos
+                </small>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
       <div class="card-body table-responsive p-0">
         <table class="table table-hover text-nowrap">
           <thead>
             <tr>
               <th>ID</th>
               <th>Image</th>
-              <th>Name</th>
-              <th>Organization</th>
-              <th>Event Date</th>
+              <th>Nome</th>
+              <th>Organização</th>
+              <th>Status</th>
+              <th>Data do Evento</th>
               <th>City</th>
               <th>State</th>
+              <th>Atletas</th>
               <th>Created</th>
-              <th>Actions</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
-            {% for backyard in backyards.items %}
-            <tr>
+            {% for item in backyards.items %}
+            {% set backyard = item[0] %}
+            {% set total_atletas = item[1] %}
+            <tr {% if backyard.status.value == 'ATIVO' %}class="table-warning"{% endif %}>
               <td>{{ backyard.id }}</td>
               <td>
-                {% if backyard.profile_picture_path %}
-                <img src="{{ url_for('backyards.get_image', backyard_id=backyard.id, image_type='profile_picture') }}" 
-                     class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Backyard Image Backyard">
+                {% if backyard.logo_path %}
+                  <br><img src="{{ url_for('backyards.get_image', backyard_id=backyard.id, image_type='logo') }}" style="height: 20px; margin-top: 2px;" alt="Logo">
                 {% else %}
                 <span class="badge badge-secondary">No Image</span>
                 {% endif %}
               </td>
               <td>
                 <strong>{{ backyard.nome }}</strong>
-                {% if backyard.logo_path %}
-                <br><img src="{{ url_for('backyards.get_image', backyard_id=backyard.id, image_type='logo') }}" 
-                         style="height: 20px; margin-top: 2px;" alt="Logo">
-                {% endif %}
               </td>
               <td>{{ backyard.organizacao.nome }}</td>
               <td>
+                {% if backyard.status.value == 'PREPARACAO' %}
+                  <span class="badge badge-secondary">🟡 Preparação</span>
+                {% elif backyard.status.value == 'ATIVO' %}
+                  <span class="badge badge-success badge-lg">🟢 AO VIVO</span>
+                {% elif backyard.status.value == 'PAUSADO' %}
+                  <span class="badge badge-warning">🟠 Pausado</span>
+                {% elif backyard.status.value == 'FINALIZADO' %}
+                  <span class="badge badge-danger">🔴 Finalizado</span>
+                {% endif %}
+              </td>
+              <td>
                 {% if backyard.data_evento %}
-                  {{ backyard.data_evento.strftime('%Y-%m-%d %H:%M') }}
+                  {% set evento_date = backyard.data_evento.date() %}
+                  {% if evento_date < hoje %}
+                    <span class="text-muted">
+                      <i class="fas fa-history"></i> {{ backyard.data_evento.strftime('%d/%m/%Y %H:%M') }}
+                      <small class="d-block">Passado</small>
+                    </span>
+                  {% elif evento_date == hoje %}
+                    <span class="text-warning font-weight-bold">
+                      <i class="fas fa-calendar-day"></i> {{ backyard.data_evento.strftime('%d/%m/%Y %H:%M') }}
+                      <small class="d-block">HOJE</small>
+                    </span>
+                  {% else %}
+                    <span class="text-info">
+                      <i class="fas fa-calendar-alt"></i> {{ backyard.data_evento.strftime('%d/%m/%Y %H:%M') }}
+                      <small class="d-block">Futuro</small>
+                    </span>
+                  {% endif %}
                 {% else %}
-                  <span class="text-muted">Not set</span>
+                  <span class="text-muted">
+                    <i class="fas fa-question-circle"></i> Não definida
+                  </span>
                 {% endif %}
               </td>
               <td>{{ backyard.cidade or '-' }}</td>
               <td>{{ backyard.estado or '-' }}</td>
+              <td>
+                <span class="badge badge-info">
+                  {{ total_atletas }} atleta{{ 's' if total_atletas != 1 else '' }}
+                </span>
+              </td>
               <td>{{ backyard.data_criacao.strftime('%Y-%m-%d %H:%M') }}</td>
               <td>
-                <a href="{{ url_for('backyards.view_backyard', id=backyard.id) }}" class="btn btn-success btn-sm" title="View Details">
-                  <i class="fas fa-eye"></i>
-                </a>
-                <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info btn-sm" title="Edit">
-                  <i class="fas fa-edit"></i>
-                </a>
-                <form method="POST" action="{{ url_for('backyards.delete_backyard', id=backyard.id) }}" style="display: inline;" 
-                      onsubmit="return confirm('Are you sure you want to delete this backyard?')">
-                  <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </form>
+                {% if backyard.status.value == 'ATIVO' %}
+                  <!-- Call to Action para Backyards Ativas -->
+                  <a href="{{ url_for('loops.manage_backyard', backyard_id=backyard.id) }}" class="btn btn-danger btn-sm" title="🔥 Acompanhar AO VIVO">
+                    <i class="fas fa-broadcast-tower"></i> <strong>AO VIVO</strong>
+                  </a>
+                  <br><small class="text-muted mt-1" style="display: block;">Evento em andamento</small>
+                {% else %}
+                  <!-- Ações Normais -->
+                  <a href="{{ url_for('loops.manage_backyard', backyard_id=backyard.id) }}" class="btn btn-warning btn-sm" title="Gerenciar Loops">
+                    <i class="fas fa-sync"></i> Loops
+                  </a>
+                {% endif %}
+                
+                <!-- Ações Básicas (sempre disponíveis) -->
+                <div class="btn-group mt-1" role="group">
+                  <a href="{{ url_for('backyards.view_backyard', id=backyard.id) }}" class="btn btn-outline-success btn-xs" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-outline-info btn-xs" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form method="POST" action="{{ url_for('backyards.delete_backyard', id=backyard.id) }}" style="display: inline;" 
+                        onsubmit="return confirm('Are you sure you want to delete this backyard?')">
+                    <button type="submit" class="btn btn-outline-danger btn-xs" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="8" class="text-center">No backyards found</td>
+              <td colspan="11" class="text-center">
+                {% if search %}
+                  Nenhum backyard encontrado para "{{ search }}"
+                {% else %}
+                  Nenhum backyard encontrado
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -92,41 +224,54 @@
       </div>
       <!-- /.card-body -->
       
-      {% if backyards.pages > 1 %}
+      <!-- Pagination and Results Info -->
       <div class="card-footer clearfix">
-        <ul class="pagination pagination-sm m-0 float-right">
-          {% if backyards.has_prev %}
-          <li class="page-item">
-            <a class="page-link" href="{{ url_for('backyards.list_backyards', page=backyards.prev_num) }}">«</a>
-          </li>
-          {% endif %}
-          
-          {% for page_num in backyards.iter_pages() %}
-            {% if page_num %}
-              {% if page_num != backyards.page %}
+        <div class="row">
+          <div class="col-md-6">
+            <small class="text-muted">
+              Mostrando {{ ((backyards.page - 1) * backyards.per_page) + 1 }} a 
+              {{ ((backyards.page - 1) * backyards.per_page) + backyards.items|length }} 
+              de {{ backyards.total }} resultados
+              {% if search %}para "{{ search }}"{% endif %}
+            </small>
+          </div>
+          <div class="col-md-6">
+            {% if backyards.pages > 1 %}
+            <ul class="pagination pagination-sm m-0 float-right">
+              {% if backyards.has_prev %}
               <li class="page-item">
-                <a class="page-link" href="{{ url_for('backyards.list_backyards', page=page_num) }}">{{ page_num }}</a>
-              </li>
-              {% else %}
-              <li class="page-item active">
-                <span class="page-link">{{ page_num }}</span>
+                <a class="page-link" href="{{ url_for('backyards.list_backyards', page=backyards.prev_num, search=search, per_page=per_page) }}">«</a>
               </li>
               {% endif %}
-            {% else %}
-            <li class="page-item disabled">
-              <span class="page-link">…</span>
-            </li>
+              
+              {% for page_num in backyards.iter_pages() %}
+                {% if page_num %}
+                  {% if page_num != backyards.page %}
+                  <li class="page-item">
+                    <a class="page-link" href="{{ url_for('backyards.list_backyards', page=page_num, search=search, per_page=per_page) }}">{{ page_num }}</a>
+                  </li>
+                  {% else %}
+                  <li class="page-item active">
+                    <span class="page-link">{{ page_num }}</span>
+                  </li>
+                  {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link">…</span>
+                </li>
+                {% endif %}
+              {% endfor %}
+              
+              {% if backyards.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('backyards.list_backyards', page=backyards.next_num, search=search, per_page=per_page) }}">»</a>
+              </li>
+              {% endif %}
+            </ul>
             {% endif %}
-          {% endfor %}
-          
-          {% if backyards.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="{{ url_for('backyards.list_backyards', page=backyards.next_num) }}">»</a>
-          </li>
-          {% endif %}
-        </ul>
+          </div>
+        </div>
       </div>
-      {% endif %}
     </div>
     <!-- /.card -->
   </div>

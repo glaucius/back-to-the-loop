@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Loop') }} {{ loop.numero_loop }} - {{ backyard.nome }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">🔄 {{ _('Loop') }} {{ loop.numero_loop }}</h1>
+          <p class="text-muted">{{ backyard.nome }}</p>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">{{ _('Home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('backyards.list_backyards') }}">{{ _('Backyards') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('loops.manage_backyard', backyard_id=backyard.id) }}">{{ _('Loops') }}</a></li>
+            <li class="breadcrumb-item active">{{ _('Loop') }} {{ loop.numero_loop }}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      
+      <!-- Navegação entre Loops -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card card-info">
+            <div class="card-header">
+              <h3 class="card-title">🧭 {{ _('Navegação de Loops') }}</h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  {% if loop_anterior %}
+                    <a href="{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=loop_anterior.numero_loop) }}" class="btn btn-outline-primary">
+                      <i class="fas fa-chevron-left"></i> {{ _('Loop Anterior') }} ({{ loop_anterior.numero_loop }})
+                    </a>
+                  {% else %}
+                    <button class="btn btn-outline-secondary" disabled>
+                      <i class="fas fa-chevron-left"></i> {{ _('Primeiro Loop') }}
+                    </button>
+                  {% endif %}
+                </div>
+                <div class="col-md-4 text-center">
+                  <select class="form-control" onchange="goToLoop(this.value)">
+                    <option value="">{{ _('Ir para Loop') }}...</option>
+                    {% for current_loop in loops %}
+                      <option value="{{ current_loop.numero_loop }}" {% if current_loop.numero_loop == loop.numero_loop %}selected{% endif %}>
+                        Loop {{ current_loop.numero_loop }}
+                        {% if current_loop.status.value == 'ATIVO' %} ({{ _('Ativo') }}){% elif current_loop.status.value == 'PREPARACAO' %} ({{ _('Preparação') }}){% endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4 text-right">
+                  {% if loop_proximo %}
+                    <a href="{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=loop_proximo.numero_loop) }}" class="btn btn-outline-primary">
+                      {{ _('Próximo Loop') }} ({{ loop_proximo.numero_loop }}) <i class="fas fa-chevron-right"></i>
+                    </a>
+                  {% else %}
+                    <button class="btn btn-outline-secondary" disabled>
+                      {{ _('Último Loop') }} <i class="fas fa-chevron-right"></i>
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informações do Loop -->
+      <div class="row">
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-primary"><i class="fas fa-sync"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Status') }}</span>
+              <span class="info-box-number">
+                {% if loop.status.value == 'PREPARACAO' %}
+                  <span class="badge badge-warning">🟡 {{ _('Preparação') }}</span>
+                {% elif loop.status.value == 'ATIVO' %}
+                  <span class="badge badge-success">🟢 {{ _('Ativo') }}</span>
+                {% elif loop.status.value == 'FINALIZADO' %}
+                  <span class="badge badge-secondary">⚫ {{ _('Finalizado') }}</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-success"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Atletas') }}</span>
+              <span class="info-box-number">{{ atletas_loop|length }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-info"><i class="fas fa-clock"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Início') }}</span>
+              <span class="info-box-number">
+                {% if loop.data_inicio %}
+                  {{ loop.data_inicio.strftime('%H:%M') }}
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-warning"><i class="fas fa-flag-checkered"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Fim') }}</span>
+              <span class="info-box-number">
+                {% if loop.data_fim %}
+                  {{ loop.data_fim.strftime('%H:%M') }}
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Atletas do Loop -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">👥 {{ _('Atletas do Loop') }} {{ loop.numero_loop }}</h3>
+              <div class="card-tools">
+                <span class="badge badge-info">{{ atletas_loop|length }} atletas</span>
+                <a href="{{ url_for('loops.manage_loop', loop_id=loop.id) }}" class="btn btn-primary btn-sm ml-2">
+                  <i class="fas fa-cogs"></i> {{ _('Gerenciar') }}
+                </a>
+              </div>
+            </div>
+            <div class="card-body">
+              {% if atletas_loop %}
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>{{ _('Pos') }}</th>
+                        <th>{{ _('Atleta') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th>{{ _('Tempo Total') }}</th>
+                        <th>{{ _('Início') }}</th>
+                        <th>{{ _('Fim') }}</th>
+                        <th>{{ _('Observações') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% set concluidos = [] %}
+                      {% for atleta_loop, atleta in atletas_loop %}
+                        {% if atleta_loop.status.value == 'CONCLUIDO' and atleta_loop.tempo_total_segundos %}
+                          {% set _ = concluidos.append((atleta_loop, atleta)) %}
+                        {% endif %}
+                      {% endfor %}
+                      
+                      {# Ordena os concluídos por tempo #}
+                      {% set concluidos_ordenados = concluidos|sort(attribute='0.tempo_total_segundos') %}
+                      
+                      {# Primeiro mostra os concluídos em ordem de tempo #}
+                      {% for atleta_loop, atleta in concluidos_ordenados %}
+                      <tr class="table-success">
+                        <td><strong>{{ loop.index }}°</strong></td>
+                        <td>
+                          <strong>{{ atleta.nome }}</strong><br>
+                          <small class="text-muted">{{ atleta.email }}</small>
+                        </td>
+                        <td>
+                          <span class="badge badge-primary">✅ {{ _('Concluído') }}</span>
+                        </td>
+                        <td>
+                          <strong class="text-success">{{ atleta_loop.get_tempo_formatado() }}</strong>
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_inicio %}
+                            {{ atleta_loop.tempo_inicio.strftime('%H:%M:%S') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_fim %}
+                            {{ atleta_loop.tempo_fim.strftime('%H:%M:%S') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.observacoes %}
+                            <small>{{ atleta_loop.observacoes[:50] }}{% if atleta_loop.observacoes|length > 50 %}...{% endif %}</small>
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                      
+                      {# Depois mostra os demais status #}
+                      {% for atleta_loop, atleta in atletas_loop %}
+                        {% if not (atleta_loop.status.value == 'CONCLUIDO' and atleta_loop.tempo_total_segundos) %}
+                      <tr>
+                        <td>-</td>
+                        <td>
+                          <strong>{{ atleta.nome }}</strong><br>
+                          <small class="text-muted">{{ atleta.email }}</small>
+                        </td>
+                        <td>
+                          {% if atleta_loop.status.value == 'ATIVO' %}
+                            <span class="badge badge-success">🟢 {{ _('Ativo') }}</span>
+                          {% elif atleta_loop.status.value == 'ELIMINADO' %}
+                            <span class="badge badge-danger">❌ {{ _('Eliminado') }}</span>
+                          {% elif atleta_loop.status.value == 'DESISTIU' %}
+                            <span class="badge badge-warning">⚠️ {{ _('Desistiu') }}</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_total_segundos %}
+                            {{ atleta_loop.get_tempo_formatado() }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_inicio %}
+                            {{ atleta_loop.tempo_inicio.strftime('%H:%M:%S') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_fim %}
+                            {{ atleta_loop.tempo_fim.strftime('%H:%M:%S') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.observacoes %}
+                            <small>{{ atleta_loop.observacoes[:50] }}{% if atleta_loop.observacoes|length > 50 %}...{% endif %}</small>
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                        {% endif %}
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <div class="text-center py-4">
+                  <i class="fas fa-users fa-2x text-muted"></i>
+                  <p class="text-muted mt-2">{{ _('Nenhum atleta neste loop.') }}</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script>
+function goToLoop(loopNumber) {
+  if (loopNumber) {
+    window.location.href = `{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=0) }}`.replace('0', loopNumber);
+  }
+}
+</script>
+
+{% endblock %}

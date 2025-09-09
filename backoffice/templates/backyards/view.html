@@ -2,7 +2,7 @@
 
 {% block title %}{{ backyard.nome }} - BTL Backoffice{% endblock %}
 
-{% block page_title %}Backyard Details{% endblock %}
+{% block page_title %}Detalhes da Backyard{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
@@ -11,45 +11,49 @@
 {% endblock %}
 
 {% block content %}
+<!-- Header Row -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 class="m-0">
+        <i class="fas fa-map-marker-alt mr-2"></i>{{ backyard.nome }}
+        {% if logo_url %}
+        <img src="{{ logo_url }}" style="height: 40px; margin-left: 10px;" alt="Logo" class="rounded">
+        {% endif %}
+      </h1>
+      <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info">
+        <i class="fas fa-edit"></i> Editar
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Main Information Row -->
 <div class="row">
-  <!-- Main Information Card -->
   <div class="col-md-8">
     <div class="card card-primary">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-map-marker-alt mr-2"></i>{{ backyard.nome }}
-          {% if logo_url %}
-          <img src="{{ logo_url }}" style="height: 30px; margin-left: 10px;" alt="Logo" class="rounded">
-          {% endif %}
+          <i class="fas fa-info-circle"></i> Informações Gerais
         </h3>
-        <div class="card-tools">
-          <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info btn-sm">
-            <i class="fas fa-edit"></i> Edit
-          </a>
-        </div>
       </div>
       <div class="card-body">
-        <!-- Profile Picture -->
-        {% if profile_picture_url %}
-        <div class="text-center mb-4">
-          <img src="{{ profile_picture_url }}" class="img-fluid rounded" style="max-height: 400px;" alt="Backyard Photo">
-        </div>
-        {% endif %}
+
 
         <!-- Basic Information -->
         <div class="row">
           <div class="col-md-6">
-            <strong><i class="fas fa-building mr-1"></i> Organization</strong>
+            <strong><i class="fas fa-building mr-1"></i> Organização</strong>
             <p class="text-muted">{{ backyard.organizacao.nome }}</p>
             
-            <strong><i class="fas fa-user mr-1"></i> Organizer</strong>
+            <strong><i class="fas fa-user mr-1"></i> Organizador</strong>
             <p class="text-muted">{{ backyard.organizacao.user.nome }}</p>
           </div>
           <div class="col-md-6">
-            <strong><i class="fas fa-calendar mr-1"></i> Created</strong>
+            <strong><i class="fas fa-calendar mr-1"></i> Criado em</strong>
             <p class="text-muted">{{ backyard.data_criacao.strftime('%B %d, %Y at %H:%M') }}</p>
             
-            <strong><i class="fas fa-clock mr-1"></i> Last Updated</strong>
+            <strong><i class="fas fa-clock mr-1"></i> Ultimo Update</strong>
             <p class="text-muted">{{ backyard.data_ultima_atualizacao.strftime('%B %d, %Y at %H:%M') }}</p>
           </div>
         </div>
@@ -57,7 +61,7 @@
         <!-- Event Date -->
         {% if backyard.data_evento %}
         <div class="mt-3">
-          <strong><i class="fas fa-calendar-alt mr-1"></i> Event Date & Time</strong>
+          <strong><i class="fas fa-calendar-alt mr-1"></i> Data e hora do evento</strong>
           <div class="mt-2 p-3 bg-light rounded">
             {{ backyard.data_evento.strftime('%B %d, %Y at %H:%M') }}
           </div>
@@ -67,7 +71,7 @@
         <!-- Description -->
         {% if backyard.descricao %}
         <div class="mt-3">
-          <strong><i class="fas fa-info-circle mr-1"></i> Description</strong>
+          <strong><i class="fas fa-info-circle mr-1"></i> Descrição</strong>
           <div class="mt-2 p-3 bg-light rounded">
             {{ backyard.descricao|replace('\n', '<br>')|safe }}
           </div>
@@ -76,50 +80,136 @@
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Side Information -->
-  <div class="col-md-4">
-    <!-- Location Card -->
+<!-- Side Information Row -->
+<div class="row">
+  <div class="col-md-6">
+    <!-- Card de Localização -->
     <div class="card card-success">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-map-pin"></i> Location
+          <i class="fas fa-map-pin"></i> Endereço e Localização
         </h3>
       </div>
       <div class="card-body">
         {% if backyard.endereco %}
-        <p><strong>Address:</strong><br>{{ backyard.endereco }}</p>
+        <p><strong>Endereço:</strong><br>{{ backyard.endereco }}</p>
         {% endif %}
         
         <div class="row">
           {% if backyard.cidade %}
           <div class="col-12">
-            <p><strong>City:</strong> {{ backyard.cidade }}</p>
+            <p><strong>Cidade:</strong> {{ backyard.cidade }}</p>
           </div>
           {% endif %}
           {% if backyard.estado %}
           <div class="col-12">
-            <p><strong>State:</strong> {{ backyard.estado }}</p>
+            <p><strong>Estado:</strong> {{ backyard.estado }}</p>
           </div>
           {% endif %}
           {% if backyard.pais %}
           <div class="col-12">
-            <p><strong>Country:</strong> {{ backyard.pais }}</p>
+            <p><strong>País:</strong> {{ backyard.pais }}</p>
           </div>
           {% endif %}
         </div>
         
         {% if not backyard.endereco and not backyard.cidade and not backyard.estado and not backyard.pais %}
-        <p class="text-muted"><i class="fas fa-exclamation-triangle"></i> No location information available</p>
+        <p class="text-muted"><i class="fas fa-exclamation-triangle"></i> Nenhuma informação de localização disponível</p>
         {% endif %}
       </div>
     </div>
+  </div>
 
-    <!-- Images Card -->
+  <div class="col-md-6">
+    <!-- Números de Peito Card -->
+    <div class="card card-info">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-hashtag"></i> Números de Peito
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-4">
+            <div class="description-block">
+              <span class="description-percentage text-success">
+                <i class="fas fa-users"></i>
+              </span>
+              <h5 class="description-header">{{ backyard.capacidade }}</h5>
+              <span class="description-text">Capacidade</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="description-block">
+              <span class="description-percentage text-info">
+                <i class="fas fa-play"></i>
+              </span>
+              <h5 class="description-header">{{ backyard.numero_inicial }}</h5>
+              <span class="description-text">Número Inicial</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="description-block">
+              <span class="description-percentage text-warning">
+                <i class="fas fa-stop"></i>
+              </span>
+              <h5 class="description-header">{{ backyard.numero_final }}</h5>
+              <span class="description-text">Número Final</span>
+            </div>
+          </div>
+        </div>
+        
+        <hr>
+        
+        <div class="row text-center">
+          <div class="col-6">
+            <div class="description-block">
+              <span class="description-percentage text-success">
+                <i class="fas fa-check-circle"></i>
+              </span>
+              <h5 class="description-header">{{ inscricoes_com_numero }}</h5>
+              <span class="description-text">Com Número</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="description-block">
+              <span class="description-percentage text-danger">
+                <i class="fas fa-times-circle"></i>
+              </span>
+              <h5 class="description-header">{{ inscricoes_sem_numero }}</h5>
+              <span class="description-text">Sem Número</span>
+            </div>
+          </div>
+        </div>
+        
+        {% if inscricoes_sem_numero > 0 %}
+        <div class="mt-3 text-center">
+          <button type="button" class="btn btn-success btn-sm" id="btn-gerar-numeros" data-backyard-id="{{ backyard.id }}">
+            <i class="fas fa-magic"></i> Gerar Números de Peito
+          </button>
+        </div>
+        {% else %}
+        <div class="mt-3 text-center">
+          <span class="badge badge-success">
+            <i class="fas fa-check"></i> Todos os atletas possuem números
+          </span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Linha de Imagens -->
+<div class="row">
+  <div class="col-12">
+    <!-- Card de Imagens -->
     <div class="card card-warning">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-images"></i> Images
+          <i class="fas fa-images"></i> Imagens
         </h3>
       </div>
       <div class="card-body">
@@ -148,25 +238,29 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- Actions Card -->
+<!-- Linha de Ações -->
+<div class="row">
+  <div class="col-12">
     <div class="card card-secondary">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="fas fa-cogs"></i> Actions
+          <i class="fas fa-cogs"></i> Ações
         </h3>
       </div>
       <div class="card-body">
-        <div class="d-grid gap-2">
-          <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info btn-block">
-            <i class="fas fa-edit"></i> Edit Backyard
+        <div class="d-flex gap-2 justify-content-center">
+          <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info">
+            <i class="fas fa-edit"></i> Editar Backyard
           </a>
-          <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-secondary btn-block">
-            <i class="fas fa-arrow-left"></i> Back to List
+          <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar à Lista
           </a>
           {% if can_delete %}
-          <button type="button" class="btn btn-danger btn-block" data-toggle="modal" data-target="#deleteModal">
-            <i class="fas fa-trash"></i> Delete Backyard
+          <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
+            <i class="fas fa-trash"></i> Excluir Backyard
           </button>
           {% endif %}
         </div>
@@ -175,7 +269,62 @@
   </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Atletas Inscritos Row -->
+{% if atletas_inscritos %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-users"></i> Atletas Inscritos ({{ total_inscricoes }})
+        </h3>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <table class="table table-hover text-nowrap">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Cidade</th>
+              <th>Data Inscrição</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inscricao, atleta in atletas_inscritos %}
+            <tr>
+              <td>
+                {% if inscricao.numero_peito %}
+                  <span class="badge badge-success">#{{ inscricao.numero_peito }}</span>
+                {% else %}
+                  <span class="badge badge-secondary">-</span>
+                {% endif %}
+              </td>
+              <td>{{ atleta.nome }}</td>
+              <td>{{ atleta.email }}</td>
+              <td>{{ atleta.cidade or '-' }}</td>
+              <td>{{ inscricao.data_inscricao.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td>
+                {% if inscricao.status_inscricao == 'inscrito' %}
+                  <span class="badge badge-success">Inscrito</span>
+                {% elif inscricao.status_inscricao == 'cancelado' %}
+                  <span class="badge badge-danger">Cancelado</span>
+                {% else %}
+                  <span class="badge badge-info">{{ inscricao.status_inscricao }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal de Confirmação de Exclusão -->
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -193,7 +342,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <form method="POST" action="{{ url_for('backyards.delete_backyard', id=backyard.id) }}" style="display: inline;">
           <button type="submit" class="btn btn-danger">
-            <i class="fas fa-trash"></i> Delete Backyard
+            <i class="fas fa-trash"></i> Excluir Backyard
           </button>
         </form>
       </div>
@@ -238,6 +387,48 @@ $(document).ready(function() {
     // Initialize tooltips
     $('[data-toggle="tooltip"]').tooltip();
     
+    // Botão Gerar Números de Peito
+    $('#btn-gerar-numeros').click(function() {
+        const backyardId = $(this).data('backyard-id');
+        const button = $(this);
+        
+        if (!confirm('Tem certeza que deseja gerar números de peito para todos os atletas inscritos?')) {
+            return;
+        }
+        
+        // Desabilitar botão durante a requisição
+        button.prop('disabled', true);
+        button.html('<i class="fas fa-spinner fa-spin"></i> Gerando...');
+        
+        $.ajax({
+            url: `/backyards/${backyardId}/gerar-numeros`,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    // Mostrar mensagem de sucesso
+                    showNotification(response.message, 'success');
+                    
+                    // Recarregar a página após 2 segundos para mostrar os números gerados
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showNotification(response.message, 'warning');
+                    // Restaurar botão
+                    button.prop('disabled', false);
+                    button.html('<i class="fas fa-magic"></i> Gerar Números de Peito');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Erro ao gerar números:', {xhr, status, error});
+                showNotification('Erro ao gerar números de peito: ' + error, 'error');
+                // Restaurar botão
+                button.prop('disabled', false);
+                button.html('<i class="fas fa-magic"></i> Gerar Números de Peito');
+            }
+        });
+    });
+    
     // Image zoom functionality (optional)
     $('.img-fluid, .img-thumbnail').click(function() {
         var src = $(this).attr('src');
@@ -261,5 +452,27 @@ $(document).ready(function() {
         });
     });
 });
+
+// Função para mostrar notificações
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-danger';
+    
+    const notification = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    
+    $('body').append(notification);
+    
+    // Auto-remover após 4 segundos
+    setTimeout(() => {
+        notification.alert('close');
+    }, 4000);
+}
 </script>
 {% endblock %}

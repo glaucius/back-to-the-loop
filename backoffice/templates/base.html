@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,12 +31,33 @@
         <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
       </li>
       <li class="nav-item d-none d-sm-inline-block">
-        <a href="{{ url_for('dashboard') }}" class="nav-link">Home</a>
+        <a href="{{ url_for('dashboard') }}" class="nav-link">{{ _('Home') }}</a>
       </li>
     </ul>
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
+      <!-- Language Selector -->
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#">
+          <i class="fas fa-globe"></i>
+          {% if CURRENT_LANGUAGE == 'pt' %}🇧🇷{% elif CURRENT_LANGUAGE == 'en' %}🇺🇸{% elif CURRENT_LANGUAGE == 'es' %}🇪🇸{% endif %}
+        </a>
+        <div class="dropdown-menu dropdown-menu-right">
+          <span class="dropdown-item dropdown-header">{{ _('Selecionar Idioma') }}</span>
+          <div class="dropdown-divider"></div>
+          {% for code, name in LANGUAGES.items() %}
+          <a href="{{ url_for('set_language', language=code) }}" class="dropdown-item {% if CURRENT_LANGUAGE == code %}active{% endif %}">
+            {% if code == 'pt' %}🇧🇷 {{ name }}
+            {% elif code == 'en' %}🇺🇸 {{ name }}
+            {% elif code == 'es' %}🇪🇸 {{ name }}
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </li>
+      
+      <!-- User Menu -->
       <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
           <i class="far fa-user"></i>
@@ -46,7 +67,7 @@
           <span class="dropdown-item dropdown-header">{{ current_user.profile.nome }}</span>
           <div class="dropdown-divider"></div>
           <a href="{{ url_for('logout') }}" class="dropdown-item">
-            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            <i class="fas fa-sign-out-alt mr-2"></i> {{ _('Logout') }}
           </a>
         </div>
       </li>
@@ -57,9 +78,9 @@
   <!-- Main Sidebar Container -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="{{ url_for('dashboard') }}" class="brand-link">
-      <img src="https://adminlte.io/themes/v3/dist/img/AdminLTELogo.png" alt="BTL Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-      <span class="brand-text font-weight-light">BTL Backoffice</span>
+    <a href="{{ url_for('dashboard') }}" class="brand-link" style="padding: 15px 10px; min-height: 90px; display: flex; align-items: center;">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="BTL Logo" class="brand-image img-circle elevation-3" style="opacity: .8; max-width: 70px; max-height: 70px; object-fit: contain; margin-right: 15px;">
+      <span class="brand-text font-weight-bold" style="font-size: 1.3rem; font-weight: bold;">Backoffice</span>
     </a>
 
     <!-- Sidebar -->
@@ -72,7 +93,7 @@
           <li class="nav-item">
             <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
               <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>Dashboard</p>
+              <p>{{ _('Dashboard') }}</p>
             </a>
           </li>
 
@@ -80,28 +101,28 @@
           <li class="nav-item">
             <a href="{{ url_for('users.list_users') }}" class="nav-link {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
-              <p>Users</p>
+              <p>{{ _('Users') }}</p>
             </a>
           </li>
 
           <li class="nav-item">
             <a href="{{ url_for('profiles.list_profiles') }}" class="nav-link {% if request.endpoint and 'profiles' in request.endpoint %}active{% endif %}">
               <i class="nav-icon fas fa-user-tag"></i>
-              <p>Profiles</p>
+              <p>{{ _('Profiles') }}</p>
             </a>
           </li>
 
           <li class="nav-item">
             <a href="{{ url_for('organizacoes.list_organizacoes') }}" class="nav-link {% if request.endpoint and 'organizacoes' in request.endpoint %}active{% endif %}">
               <i class="nav-icon fas fa-building"></i>
-              <p>Organizations</p>
+              <p>{{ _('Organizations') }}</p>
             </a>
           </li>
 
           <li class="nav-item">
             <a href="{{ url_for('atletas.list') }}" class="nav-link {% if request.endpoint and 'atletas' in request.endpoint %}active{% endif %}">
               <i class="nav-icon fas fa-user"></i>
-              <p>Atletas</p>
+              <p>{{ _('Athletes') }}</p>
             </a>
           </li>
 
@@ -111,7 +132,7 @@
           <li class="nav-item">
             <a href="{{ url_for('backyards.list_backyards') }}" class="nav-link {% if request.endpoint and 'backyards' in request.endpoint %}active{% endif %}">
               <i class="nav-icon fas fa-map-marker-alt"></i>
-              <p>Backyards</p>
+              <p>{{ _('Backyards') }}</p>
             </a>
           </li>
           {% endif %}
@@ -170,15 +191,15 @@
 
   <footer class="main-footer">
     <strong>Copyright &copy; 2024 <a href="#">BTL</a>.</strong>
-    All rights reserved.
+    Todos os direitos reservados.
     <div class="float-right d-none d-sm-inline-block">
-      <b>Version</b> 1.0.0
+      <b>Versão</b> 1.0.0
     </div>
   </footer>
 
   <!-- Control Sidebar -->
   <aside class="control-sidebar control-sidebar-dark">
-    <!-- Control sidebar content goes here -->
+    <!-- Conteúdo da barra lateral de controle vai aqui -->
   </aside>
   <!-- /.control-sidebar -->
 </div>

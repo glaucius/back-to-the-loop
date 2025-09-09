@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Gerenciar Loops') }} - {{ backyard.nome }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">🏃‍♂️ {{ _('Controle de Loops') }}</h1>
+          <p class="text-muted">{{ backyard.nome }}</p>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">{{ _('Home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('backyards.list_backyards') }}">{{ _('Backyards') }}</a></li>
+            <li class="breadcrumb-item active">{{ _('Loops') }}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      
+      <!-- Status do Evento -->
+      <div class="row">
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-info"><i class="fas fa-flag"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Status do Evento') }}</span>
+              <span class="info-box-number">
+                {% if backyard.status.value == 'PREPARACAO' %}
+                  <span class="badge badge-warning">🟡 {{ _('Preparação') }}</span>
+                {% elif backyard.status.value == 'ATIVO' %}
+                  <span class="badge badge-success">🟢 {{ _('Ativo') }}</span>
+                {% elif backyard.status.value == 'PAUSADO' %}
+                  <span class="badge badge-warning">🟠 {{ _('Pausado') }}</span>
+                {% elif backyard.status.value == 'FINALIZADO' %}
+                  <span class="badge badge-danger">🔴 {{ _('Finalizado') }}</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-success"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Atletas Inscritos') }}</span>
+              <span class="info-box-number">{{ total_atletas }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-warning"><i class="fas fa-running"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Atletas Ativos') }}</span>
+              <span class="info-box-number">{{ atletas_ativos }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-primary"><i class="fas fa-sync"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Loop Atual') }}</span>
+              <span class="info-box-number">{{ loop_atual.numero_loop if loop_atual else 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles do Evento -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">🎮 {{ _('Controles do Evento') }}</h3>
+            </div>
+            <div class="card-body">
+              {% if backyard.status.value == 'PREPARACAO' %}
+                <form method="POST" action="{{ url_for('loops.start_backyard', backyard_id=backyard.id) }}" class="d-inline">
+                  <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('Iniciar evento? Esta ação criará o primeiro loop.')">
+                    <i class="fas fa-play"></i> {{ _('Iniciar Evento') }}
+                  </button>
+                </form>
+                <p class="text-muted mt-2">🚀 {{ _('Clique para iniciar o evento e criar o primeiro loop.') }}</p>
+              {% elif backyard.status.value == 'ATIVO' %}
+                <button class="btn btn-warning btn-lg" disabled>
+                  <i class="fas fa-pause"></i> {{ _('Pausar Evento') }}
+                </button>
+                <button class="btn btn-danger btn-lg ml-2" disabled>
+                  <i class="fas fa-stop"></i> {{ _('Finalizar Evento') }}
+                </button>
+                <p class="text-muted mt-2">⚡ {{ _('Evento em andamento. Use os controles de loop abaixo.') }}</p>
+              {% else %}
+                <p class="text-info">{{ _('Evento') }} {{ backyard.status.value.lower() }}.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loop Atual em Destaque -->
+      {% if loop_atual %}
+      <div class="row">
+        <div class="col-12">
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">🔥 {{ _('Loop Atual') }} - Loop {{ loop_atual.numero_loop }}</h3>
+              <div class="card-tools">
+                {% if loop_atual.status.value == 'PREPARACAO' %}
+                  <span class="badge badge-warning badge-lg">🟡 {{ _('Preparação') }}</span>
+                {% elif loop_atual.status.value == 'ATIVO' %}
+                  <span class="badge badge-success badge-lg">🟢 {{ _('Ativo') }}</span>
+                {% elif loop_atual.status.value == 'FINALIZADO' %}
+                  <span class="badge badge-secondary badge-lg">⚫ {{ _('Finalizado') }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <strong>{{ _('Início') }}:</strong><br>
+                  {% if loop_atual.data_inicio %}
+                    <span class="text-success">{{ loop_atual.data_inicio.strftime('%d/%m/%Y %H:%M') }}</span>
+                  {% else %}
+                    <span class="text-muted">{{ _('Não iniciado') }}</span>
+                  {% endif %}
+                </div>
+                <div class="col-md-3">
+                  <strong>{{ _('Fim') }}:</strong><br>
+                  {% if loop_atual.data_fim %}
+                    <span class="text-info">{{ loop_atual.data_fim.strftime('%d/%m/%Y %H:%M') }}</span>
+                  {% else %}
+                    <span class="text-muted">{{ _('Em andamento') }}</span>
+                  {% endif %}
+                </div>
+                <div class="col-md-3">
+                  <strong>{{ _('Atletas') }}:</strong><br>
+                  <span class="badge badge-info badge-lg">{{ loop_atual.atleta_loops|length }}</span>
+                </div>
+                <div class="col-md-3">
+                  <strong>{{ _('Ações') }}:</strong><br>
+                  <a href="{{ url_for('loops.manage_loop', loop_id=loop_atual.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-cogs"></i> {{ _('Gerenciar') }}
+                  </a>
+                  
+                  {% if loop_atual.status.value == 'PREPARACAO' %}
+                    <button class="btn btn-success btn-sm ml-1" onclick="startLoop({{ loop_atual.id }})">
+                      <i class="fas fa-play"></i> {{ _('Iniciar') }}
+                    </button>
+                  {% elif loop_atual.status.value == 'ATIVO' %}
+                    <button class="btn btn-warning btn-sm ml-1" onclick="createNextLoop({{ loop_atual.id }})">
+                      <i class="fas fa-forward"></i> {{ _('Próximo') }}
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Atletas do Loop Atual -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">👥 {{ _('Atletas do Loop') }} {{ loop_atual.numero_loop }}</h3>
+              <div class="card-tools">
+                <span class="badge badge-info">{{ atletas_loop_atual|length }} atletas</span>
+              </div>
+            </div>
+            <div class="card-body">
+              {% if atletas_loop_atual %}
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm">
+                    <thead>
+                      <tr>
+                        <th>{{ _('Pos') }}</th>
+                        <th>{{ _('Atleta') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th>{{ _('Tempo') }}</th>
+                        <th>{{ _('Início') }}</th>
+                        <th>{{ _('Fim') }}</th>
+                        <th>{{ _('Observações') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for atleta_loop, atleta in atletas_loop_atual %}
+                      <tr>
+                        <td>
+                          {% if atleta_loop.status.value == 'CONCLUIDO' and atleta_loop.tempo_total_segundos %}
+                            <strong>{{ loop.index0 + 1 }}°</strong>
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>
+                          <strong>{{ atleta.nome }}</strong><br>
+                          <small class="text-muted">{{ atleta.email }}</small>
+                        </td>
+                        <td>
+                          {% if atleta_loop.status.value == 'ATIVO' %}
+                            <span class="badge badge-success">🟢 {{ _('Ativo') }}</span>
+                          {% elif atleta_loop.status.value == 'CONCLUIDO' %}
+                            <span class="badge badge-primary">✅ {{ _('Concluído') }}</span>
+                          {% elif atleta_loop.status.value == 'ELIMINADO' %}
+                            <span class="badge badge-danger">❌ {{ _('Eliminado') }}</span>
+                          {% elif atleta_loop.status.value == 'DESISTIU' %}
+                            <span class="badge badge-warning">⚠️ {{ _('Desistiu') }}</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_total_segundos %}
+                            <strong>{{ atleta_loop.get_tempo_formatado() }}</strong>
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_inicio %}
+                            {{ atleta_loop.tempo_inicio.strftime('%H:%M:%S') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.tempo_fim %}
+                            {{ atleta_loop.tempo_fim.strftime('%H:%M:%S') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if atleta_loop.observacoes %}
+                            <small>{{ atleta_loop.observacoes[:50] }}{% if atleta_loop.observacoes|length > 50 %}...{% endif %}</small>
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <div class="text-center py-4">
+                  <i class="fas fa-users fa-2x text-muted"></i>
+                  <p class="text-muted mt-2">{{ _('Nenhum atleta no loop atual.') }}</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Navegação de Loops -->
+      {% if total_loops > 1 %}
+      <div class="row">
+        <div class="col-12">
+          <div class="card card-secondary collapsed-card">
+            <div class="card-header">
+              <h3 class="card-title">📋 {{ _('Histórico de Loops') }} ({{ total_loops }} loops)</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Navegação Rápida -->
+              <div class="row mb-3">
+                <div class="col-12">
+                  <div class="form-group">
+                    <label>{{ _('Ir para Loop') }}:</label>
+                    <select class="form-control" style="width: 200px; display: inline-block;" onchange="goToLoop(this.value)">
+                      <option value="">{{ _('Selecione um loop') }}...</option>
+                      {% for current_loop in loops %}
+                        <option value="{{ current_loop.numero_loop }}" {% if loop_atual and current_loop.id == loop_atual.id %}selected{% endif %}>
+                          Loop {{ current_loop.numero_loop }} 
+                          {% if current_loop.status.value == 'ATIVO' %}({{ _('Ativo') }}){% elif current_loop.status.value == 'PREPARACAO' %}({{ _('Preparação') }}){% endif %}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loops Recentes -->
+              {% if loops_recentes %}
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm">
+                    <thead>
+                      <tr>
+                        <th>{{ _('Loop') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th>{{ _('Início') }}</th>
+                        <th>{{ _('Atletas') }}</th>
+                        <th>{{ _('Ações') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for current_loop in loops_recentes %}
+                      <tr {% if loop_atual and current_loop.id == loop_atual.id %}class="table-primary"{% endif %}>
+                        <td>
+                          <strong>Loop {{ current_loop.numero_loop }}</strong>
+                          {% if loop_atual and current_loop.id == loop_atual.id %}
+                            <span class="badge badge-success badge-sm ml-1">{{ _('Atual') }}</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if current_loop.status.value == 'PREPARACAO' %}
+                            <span class="badge badge-warning">🟡 {{ _('Preparação') }}</span>
+                          {% elif current_loop.status.value == 'ATIVO' %}
+                            <span class="badge badge-success">🟢 {{ _('Ativo') }}</span>
+                          {% elif current_loop.status.value == 'FINALIZADO' %}
+                            <span class="badge badge-secondary">⚫ {{ _('Finalizado') }}</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if current_loop.data_inicio %}
+                            {{ current_loop.data_inicio.strftime('%d/%m %H:%M') }}
+                          {% else %}
+                            <span class="text-muted">-</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <span class="badge badge-info">{{ current_loop.atleta_loops|length }}</span>
+                        </td>
+                        <td>
+                          <a href="{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=current_loop.numero_loop) }}" class="btn btn-xs btn-outline-primary">
+                            <i class="fas fa-eye"></i> {{ _('Ver') }}
+                          </a>
+                          <a href="{{ url_for('loops.manage_loop', loop_id=current_loop.id) }}" class="btn btn-xs btn-outline-success">
+                            <i class="fas fa-cogs"></i> {{ _('Gerenciar') }}
+                          </a>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {% if total_loops > 10 %}
+                  <div class="text-center mt-3">
+                    <p class="text-muted">{{ _('Mostrando os últimos 10 loops de') }} {{ total_loops }} {{ _('total') }}.</p>
+                  </div>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+</div>
+
+<script>
+function startLoop(loopId) {
+  if (confirm('Iniciar este loop? Todos os atletas começarão a contar tempo.')) {
+    fetch(`/loops/loop/${loopId}/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Erro: ' + data.message);
+      }
+    })
+    .catch(error => {
+      alert('Erro de conexão: ' + error);
+    });
+  }
+}
+
+function createNextLoop(loopId) {
+  if (confirm('Criar próximo loop? Apenas atletas que concluíram o loop atual serão incluídos.')) {
+    fetch(`/loops/loop/${loopId}/create_next`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+        
+        if (data.event_finished) {
+          // Evento finalizado
+          setTimeout(() => {
+            window.location.href = `{{ url_for('backyards.list_backyards') }}`;
+          }, 3000);
+        }
+      } else {
+        alert('Erro: ' + data.message);
+      }
+    })
+    .catch(error => {
+      alert('Erro de conexão: ' + error);
+    });
+  }
+}
+
+function goToLoop(loopNumber) {
+  if (loopNumber) {
+    window.location.href = `{{ url_for('loops.view_specific_loop', backyard_id=backyard.id, loop_number=0) }}`.replace('0', loopNumber);
+  }
+}
+</script>
+
+{% endblock %}

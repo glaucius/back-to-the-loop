@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Gerenciar Loop') }} {{ loop.numero_loop }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Content Header -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">🔄 {{ _('Loop') }} {{ loop.numero_loop }}</h1>
+          <p class="text-muted">{{ loop.backyard.nome }}</p>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">{{ _('Home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('backyards.list_backyards') }}">{{ _('Backyards') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('loops.manage_backyard', backyard_id=loop.backyard_id) }}">{{ _('Loops') }}</a></li>
+            <li class="breadcrumb-item active">{{ _('Loop') }} {{ loop.numero_loop }}</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      
+      <!-- Informações do Loop -->
+      <div class="row">
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-info"><i class="fas fa-flag"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Status do Loop') }}</span>
+              <span class="info-box-number">
+                {% if loop.status.value == 'PREPARACAO' %}
+                  <span class="badge badge-warning">🟡 {{ _('Preparação') }}</span>
+                {% elif loop.status.value == 'ATIVO' %}
+                  <span class="badge badge-success">🟢 {{ _('Ativo') }}</span>
+                {% elif loop.status.value == 'FINALIZADO' %}
+                  <span class="badge badge-secondary">⚫ {{ _('Finalizado') }}</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-success"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Total Atletas') }}</span>
+              <span class="info-box-number">{{ stats.total }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-warning"><i class="fas fa-running"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Ativos') }}</span>
+              <span class="info-box-number">{{ stats.ativos }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="info-box">
+            <span class="info-box-icon bg-primary"><i class="fas fa-check"></i></span>
+            <div class="info-box-content">
+              <span class="info-box-text">{{ _('Concluídos') }}</span>
+              <span class="info-box-number">{{ stats.concluidos }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informações Detalhadas -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">ℹ️ {{ _('Detalhes do Loop') }}</h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>{{ _('Distância:') }}</strong> {{ loop.distancia_km }} km</p>
+                  <p><strong>{{ _('Tempo Limite:') }}</strong> {{ (loop.tempo_limite // 60) }} minutos</p>
+                  {% if loop.data_inicio %}
+                    <p><strong>{{ _('Início:') }}</strong> {{ loop.data_inicio.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  {% if loop.data_fim %}
+                    <p><strong>{{ _('Fim:') }}</strong> {{ loop.data_fim.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                  {% endif %}
+                  <p><strong>{{ _('Eliminados:') }}</strong> {{ stats.eliminados }}</p>
+                  {% if loop.status.value == 'ATIVO' %}
+                    <p class="text-success"><i class="fas fa-clock"></i> {{ _('Loop em andamento...') }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de Atletas -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">👥 {{ _('Atletas no Loop') }}</h3>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>{{ _('Atleta') }}</th>
+                      <th>{{ _('Status') }}</th>
+                      <th>{{ _('Tempo Início') }}</th>
+                      <th>{{ _('Tempo Fim') }}</th>
+                      <th>{{ _('Tempo Total') }}</th>
+                      <th>{{ _('Observações') }}</th>
+                      <th>{{ _('Ações') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for atleta_loop, atleta in atletas_loop %}
+                    <tr>
+                      <td>
+                        <strong>{{ atleta.nome }}</strong><br>
+                        <small class="text-muted">{{ atleta.email }}</small>
+                      </td>
+                      <td>
+                        {% if atleta_loop.status.value == 'ATIVO' %}
+                          <span class="badge badge-warning">🟡 {{ _('Ativo') }}</span>
+                        {% elif atleta_loop.status.value == 'CONCLUIDO' %}
+                          <span class="badge badge-success">✅ {{ _('Concluído') }}</span>
+                        {% elif atleta_loop.status.value == 'ELIMINADO' %}
+                          <span class="badge badge-danger">❌ {{ _('Eliminado') }}</span>
+                        {% elif atleta_loop.status.value == 'DNF' %}
+                          <span class="badge badge-secondary">🚫 DNF</span>
+                        {% elif atleta_loop.status.value == 'DNS' %}
+                          <span class="badge badge-secondary">⏸️ DNS</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if atleta_loop.tempo_inicio %}
+                          {{ atleta_loop.tempo_inicio.strftime('%H:%M:%S') }}
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if atleta_loop.tempo_fim %}
+                          {{ atleta_loop.tempo_fim.strftime('%H:%M:%S') }}
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if atleta_loop.tempo_total_segundos %}
+                          <strong>{{ atleta_loop.get_tempo_formatado() }}</strong>
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if atleta_loop.observacoes %}
+                          <small>{{ atleta_loop.observacoes }}</small>
+                        {% else %}
+                          <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <!-- Botão para marcar como concluído -->
+                          {% if atleta_loop.status.value == 'ATIVO' %}
+                            <button class="btn btn-sm btn-success" onclick="finishAthlete({{ atleta_loop.id }}, '{{ atleta.nome }}')">
+                              <i class="fas fa-check"></i> {{ _('Concluir') }}
+                            </button>
+                          {% endif %}
+                          
+                          <!-- Botão para alterar status -->
+                          <button class="btn btn-sm btn-warning" onclick="changeStatus({{ atleta_loop.id }}, '{{ atleta.nome }}')">
+                            <i class="fas fa-edit"></i> {{ _('Alterar') }}
+                          </button>
+                          
+                          <!-- Botão para editar tempo -->
+                          {% if atleta_loop.tempo_total_segundos %}
+                            <button class="btn btn-sm btn-info" onclick="editTime({{ atleta_loop.id }}, '{{ atleta.nome }}', '{{ atleta_loop.get_tempo_formatado() }}')">
+                              <i class="fas fa-clock"></i> {{ _('Tempo') }}
+                            </button>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- Modal para marcar conclusão -->
+<div class="modal fade" id="finishModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">✅ {{ _('Marcar como Concluído') }}</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="finishForm" method="POST">
+        <div class="modal-body">
+          <p><strong id="finishAthleteName"></strong></p>
+          
+          <div class="form-group">
+            <label for="tempo_fim">{{ _('Tempo de Conclusão (HH:MM:SS)') }}:</label>
+            <input type="time" id="tempo_fim" name="tempo_fim" class="form-control" step="1">
+            <small class="form-text text-muted">{{ _('Deixe em branco para usar o tempo atual.') }}</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="observacoes">{{ _('Observações') }}:</label>
+            <textarea id="observacoes" name="observacoes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Cancelar') }}</button>
+          <button type="submit" class="btn btn-success">{{ _('Confirmar') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para alterar status -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">⚠️ {{ _('Alterar Status') }}</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="statusForm" method="POST">
+        <div class="modal-body">
+          <p><strong id="statusAthleteName"></strong></p>
+          
+          <div class="form-group">
+            <label for="status">{{ _('Novo Status') }}:</label>
+            <select id="status" name="status" class="form-control">
+              <option value="ATIVO">🟡 {{ _('Ativo') }}</option>
+              <option value="CONCLUIDO">✅ {{ _('Concluído') }}</option>
+              <option value="ELIMINADO">❌ {{ _('Eliminado') }}</option>
+              <option value="DNF">🚫 DNF (Did Not Finish)</option>
+              <option value="DNS">⏸️ DNS (Did Not Start)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="status_observacoes">{{ _('Motivo/Observações') }}:</label>
+            <textarea id="status_observacoes" name="observacoes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Cancelar') }}</button>
+          <button type="submit" class="btn btn-warning">{{ _('Alterar Status') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar tempo -->
+<div class="modal fade" id="timeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">🕐 {{ _('Corrigir Tempo') }}</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <form id="timeForm" method="POST">
+        <div class="modal-body">
+          <p><strong id="timeAthleteName"></strong></p>
+          
+          <div class="form-group">
+            <label for="tempo_total">{{ _('Tempo Total (HH:MM:SS)') }}:</label>
+            <input type="text" id="tempo_total" name="tempo_total" class="form-control" placeholder="01:30:45">
+            <small class="form-text text-muted">{{ _('Formato: HH:MM:SS') }}</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="time_observacoes">{{ _('Motivo da Correção') }}:</label>
+            <textarea id="time_observacoes" name="observacoes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Cancelar') }}</button>
+          <button type="submit" class="btn btn-info">{{ _('Corrigir Tempo') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function finishAthlete(atletaLoopId, athleteName) {
+  document.getElementById('finishAthleteName').textContent = athleteName;
+  document.getElementById('finishForm').action = `/loops/atleta_loop/${atletaLoopId}/finish`;
+  
+  // Pré-preencher com hora atual
+  const now = new Date();
+  const timeString = now.toTimeString().substr(0, 8);
+  document.getElementById('tempo_fim').value = timeString;
+  
+  $('#finishModal').modal('show');
+}
+
+function changeStatus(atletaLoopId, athleteName) {
+  document.getElementById('statusAthleteName').textContent = athleteName;
+  document.getElementById('statusForm').action = `/loops/atleta_loop/${atletaLoopId}/change_status`;
+  $('#statusModal').modal('show');
+}
+
+function editTime(atletaLoopId, athleteName, currentTime) {
+  document.getElementById('timeAthleteName').textContent = athleteName;
+  document.getElementById('tempo_total').value = currentTime;
+  document.getElementById('timeForm').action = `/loops/atleta_loop/${atletaLoopId}/edit_time`;
+  $('#timeModal').modal('show');
+}
+</script>
+
+{% endblock %}
