@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Contato - Back to the Loop{% endblock %}
+
+{% block content %}
+
+<!-- Page Title -->
+<div class="page-title dark-background">
+  <div class="container position-relative">
+    <h1>Contato</h1>
+    <p>Entre em contato conosco</p>
+    <nav class="breadcrumbs">
+      <ol>
+        <li><a href="{{ url_for('home.index') }}">Home</a></li>
+        <li class="current">Contato</li>
+      </ol>
+    </nav>
+  </div>
+</div><!-- End Page Title -->
+
+<!-- Contact Section -->
+<section id="contact" class="contact section">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-lg-6">
+        <div class="info-item d-flex">
+          <i class="bi bi-envelope flex-shrink-0"></i>
+          <div>
+            <h3>Email</h3>
+            <p>contato@backtotheloop.com</p>
+          </div>
+        </div>
+
+        <div class="info-item d-flex">
+          <i class="bi bi-globe flex-shrink-0"></i>
+          <div>
+            <h3>Website</h3>
+            <p>www.backtotheloop.com</p>
+          </div>
+        </div>
+
+        <div class="info-item d-flex">
+          <i class="bi bi-clock flex-shrink-0"></i>
+          <div>
+            <h3>Horário de Atendimento</h3>
+            <p>Segunda - Sexta: 9h às 18h</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <form class="php-email-form">
+          <div class="row gy-4">
+            <div class="col-md-6">
+              <input type="text" name="name" class="form-control" placeholder="Seu Nome" required>
+            </div>
+            <div class="col-md-6">
+              <input type="email" class="form-control" name="email" placeholder="Seu Email" required>
+            </div>
+            <div class="col-12">
+              <input type="text" class="form-control" name="subject" placeholder="Assunto" required>
+            </div>
+            <div class="col-12">
+              <textarea class="form-control" name="message" rows="6" placeholder="Mensagem" required></textarea>
+            </div>
+            <div class="col-12 text-center">
+              <button type="submit">Enviar Mensagem</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

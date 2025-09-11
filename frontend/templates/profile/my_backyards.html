@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Inscrições - Back to the Loop{% endblock %}
+
+{% block content %}
+
+    <!-- Page Title -->
+    <div class="page-title dark-background" data-aos="fade" style="background-image: url({{ url_for('static', filename='img/hero-bg.png') }});">
+      <div class="container position-relative">
+      </div>
+    </div><!-- End Page Title -->
+
+<!-- Profile Edit Section -->
+<section id="services" class="services section">
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+          <!-- Section Title -->
+          <div class="container section-title" data-aos="fade-up">
+            <h2>MINHAS INSCRIÇÕES</h2>
+            <p>{{ current_user.nome }}</p>
+          </div><!-- End Section Title -->
+    
+    {% if inscricoes %}
+    <div class="row gy-4">
+      {% for inscricao in inscricoes %}
+      <div class="col-lg-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+          
+          <!-- Backyard Image -->
+          {% if inscricao.backyard.profile_picture_path %}
+          <img src="http://localhost:9000/btl-images/{{ inscricao.backyard.profile_picture_path }}" 
+               class="card-img-top" alt="{{ inscricao.backyard.nome }}" 
+               style="height: 200px; object-fit: cover;">
+          {% else %}
+          <img src="{{ url_for('static', filename='img/backyard-1.jpg') }}" 
+               class="card-img-top" alt="{{ inscricao.backyard.nome }}" 
+               style="height: 200px; object-fit: cover;">
+          {% endif %}
+          
+          <div class="card-body d-flex flex-column">
+            
+            <!-- Header with Status -->
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title">{{ inscricao.backyard.nome }}</h5>
+              {% if inscricao.backyard.status.value == 'ATIVO' %}
+              <span class="badge bg-success">🟢 AO VIVO</span>
+              {% elif inscricao.backyard.status.value == 'PREPARACAO' %}
+              <span class="badge bg-warning">🟡 EM BREVE</span>
+              {% elif inscricao.backyard.status.value == 'FINALIZADO' %}
+              <span class="badge bg-secondary">⚫ FINALIZADO</span>
+              {% endif %}
+            </div>
+            
+            <!-- Description -->
+            <p class="card-text">
+              {% if inscricao.backyard.descricao %}
+              {{ inscricao.backyard.descricao[:100] }}{% if inscricao.backyard.descricao|length > 100 %}...{% endif %}
+              {% else %}
+              Evento de backyard ultra em {{ inscricao.backyard.cidade }}.
+              {% endif %}
+            </p>
+            
+            <!-- Event Info -->
+            <div class="mt-auto">
+              <div class="row text-muted small mb-3">
+                <div class="col-6">
+                  <i class="bi bi-geo-alt"></i> {{ inscricao.backyard.cidade }}, {{ inscricao.backyard.estado }}
+                </div>
+                <div class="col-6">
+                  {% if inscricao.backyard.data_evento %}
+                  <i class="bi bi-calendar"></i> {{ inscricao.backyard.data_evento.strftime('%d/%m/%Y') }}
+                  {% else %}
+                  <i class="bi bi-calendar"></i> A definir
+                  {% endif %}
+                </div>
+              </div>
+              
+              <!-- Inscription Info -->
+              <div class="border-top pt-3">
+                <div class="row small">
+                  <div class="col-6">
+                    <strong>Inscrito em:</strong><br>
+                    <span class="text-muted">{{ inscricao.data_inscricao.strftime('%d/%m/%Y às %H:%M') }}</span>
+                  </div>
+                  <div class="col-6">
+                    <strong>Status:</strong><br>
+                    {% if inscricao.status_inscricao == 'inscrito' %}
+                    <span class="text-success">✅ Confirmado</span>
+                    {% elif inscricao.status_inscricao == 'pendente' %}
+                    <span class="text-warning">⏳ Pendente</span>
+                    {% elif inscricao.status_inscricao == 'cancelado' %}
+                    <span class="text-danger">❌ Cancelado</span>
+                    {% else %}
+                    <span class="text-info">{{ inscricao.status_inscricao|title }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Actions -->
+              <div class="d-grid mt-3">
+                <a href="{{ url_for('backyards.view_backyard', id=inscricao.backyard.id) }}" 
+                   class="btn btn-outline-primary">
+                  <i class="bi bi-eye"></i> Ver Detalhes
+                </a>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    {% else %}
+    <!-- No inscriptions -->
+    <div class="row">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+          <h3 class="text-muted mt-3">Nenhuma inscrição encontrada</h3>
+          <p class="text-muted">Você ainda não se inscreveu em nenhuma backyard.</p>
+          <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-primary">
+            <i class="bi bi-search"></i> Buscar Backyards Disponíveis
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Back to Dashboard -->
+    <div class="row mt-5">
+      <div class="col-12">
+        <div class="text-center">
+          <a href="{{ url_for('profile.dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</section><!-- /My Backyards Section -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add any specific JavaScript for this page if needed
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize AOS animations
+  if (typeof AOS !== 'undefined') {
+    AOS.refresh();
+  }
+});
+</script>
+{% endblock %}

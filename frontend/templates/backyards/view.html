@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}{{ backyard.nome }} - Back to the Loop{% endblock %}
+
+{% block content %}
+
+
+    <!-- Page Title -->
+    <div class="page-title dark-background" data-aos="fade" style="background-image: url({{ url_for('static', filename='img/hero-bg.png') }});">
+      <div class="container position-relative">
+      </div>
+    </div><!-- End Page Title -->
+
+
+<!-- Backyard Details Section -->
+<section id="services" class="services section">
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+
+          <!-- Section Title -->
+          <div class="container section-title" data-aos="fade-up">
+            <h2>{{ backyard.nome }}</h2>
+            <p>{{ backyard.nome }} - {{ backyard.data_evento.strftime('%d/%m/%Y às %H:%M') }} - {{ backyard.cidade }}, {{ backyard.estado }}</p>
+          </div><!-- End Section Title -->
+
+    <div class="row gy-4">
+
+      <!-- Imagem e Info Principal -->
+      <div class="col-lg-8">
+        <div class="card">
+          {% if backyard.profile_picture_path %}
+          <img src="http://localhost:9000/btl-images/{{ backyard.profile_picture_path }}" class="card-img-top" alt="{{ backyard.nome }}" style="height: 300px; object-fit: cover;">
+          {% else %}
+          <img src="{{ url_for('static', filename='img/backyard-1.jpg') }}" class="card-img-top" alt="{{ backyard.nome }}" style="height: 300px; object-fit: cover;">
+          {% endif %}
+          
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h1 class="card-title">{{ backyard.nome }}</h1>
+              <div class="d-flex flex-column align-items-end gap-2">
+                {% if backyard.status.value == 'ATIVO' %}
+                <span class="badge bg-success fs-6">🟢 AO VIVO</span>
+                <a href="{{ url_for('backyards.live_view', id=backyard.id) }}" class="btn btn-success btn-sm">
+                  <i class="bi bi-broadcast"></i> Visualização em Tempo Real
+                </a>
+                {% elif backyard.status.value == 'PREPARACAO' %}
+                <span class="badge bg-warning fs-6">🟡 EM BREVE</span>
+                {% elif backyard.status.value == 'FINALIZADO' %}
+                <span class="badge bg-info fs-6">🏁 FINALIZADO</span>
+                {% else %}
+                <span class="badge bg-secondary fs-6">{{ backyard.status.value }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if backyard.descricao %}
+            <div class="mb-4">
+              <h5>Descrição</h5>
+              <p>{{ backyard.descricao }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Informações do Evento -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6><i class="bi bi-geo-alt text-primary"></i> Local</h6>
+                <p>{{ backyard.cidade }}, {{ backyard.estado }}{% if backyard.pais %}, {{ backyard.pais }}{% endif %}</p>
+                
+                {% if backyard.endereco %}
+                <h6><i class="bi bi-map text-primary"></i> Endereço</h6>
+                <p>{{ backyard.endereco }}</p>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                {% if backyard.data_evento %}
+                <h6><i class="bi bi-calendar text-primary"></i> Data do Evento</h6>
+                <p>{{ backyard.data_evento.strftime('%d/%m/%Y') }}</p>
+                {% endif %}
+                
+                <h6><i class="bi bi-clock text-primary"></i> Criado em</h6>
+                <p>{{ backyard.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</p>
+              </div>
+            </div>
+
+            <!-- Organização -->
+            {% if backyard.organizacao %}
+            <div class="mb-4">
+              <h6><i class="bi bi-people text-primary"></i> Organização</h6>
+              <p>{{ backyard.organizacao.nome }}</p>
+              {% if backyard.organizacao.descricao %}
+              <small class="text-muted">{{ backyard.organizacao.descricao }}</small>
+              {% endif %}
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel Lateral -->
+      <div class="col-lg-4">
+        
+        <!-- Status da Inscrição -->
+        {% if current_user.is_authenticated %}
+        <div class="card mb-4">
+          <div class="card-header {% if is_inscrito %}bg-success{% else %}bg-primary{% endif %} text-white">
+            <h5 class="mb-0">
+              {% if is_inscrito %}
+              <i class="bi bi-check-circle"></i> Você está inscrito!
+              {% else %}
+              <i class="bi bi-person-plus"></i> Inscrição
+              {% endif %}
+            </h5>
+          </div>
+          <div class="card-body">
+            {% if is_inscrito %}
+              {% if inscricao.numero_peito %}
+              <p><strong>Seu número de peito:</strong> <span class="badge bg-primary fs-6">#{{ inscricao.numero_peito }}</span></p>
+              {% endif %}
+              <p><strong>Inscrito em:</strong> {{ inscricao.data_inscricao.strftime('%d/%m/%Y às %H:%M') }}</p>
+              
+              {% if backyard.status.value == 'PREPARACAO' %}
+              <form method="POST" action="{{ url_for('backyards.cancelar_inscricao', id=backyard.id) }}" 
+                    onsubmit="return confirm('Tem certeza que deseja cancelar sua inscrição?')">
+                <button type="submit" class="btn btn-outline-danger w-100">
+                  <i class="bi bi-x-circle"></i> Cancelar Inscrição
+                </button>
+              </form>
+              {% endif %}
+            {% else %}
+              {% if backyard.status.value == 'PREPARACAO' %}
+                {% if vagas_restantes is not none and vagas_restantes <= 0 %}
+                <div class="alert alert-warning">
+                  <i class="bi bi-exclamation-triangle"></i> Evento lotado
+                </div>
+                {% else %}
+                <form method="POST" action="{{ url_for('backyards.inscrever', id=backyard.id) }}">
+                  <button type="submit" class="btn btn-success w-100 btn-lg">
+                    <i class="bi bi-person-plus"></i> Inscrever-se
+                  </button>
+                </form>
+                {% endif %}
+              {% else %}
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle"></i> Inscrições não disponíveis para este evento
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <!-- Usuário não logado -->
+        <div class="card mb-4">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Login Necessário</h5>
+          </div>
+          <div class="card-body">
+            <p>Para se inscrever neste evento, você precisa estar logado.</p>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary w-100 mb-2">
+              <i class="bi bi-box-arrow-in-right"></i> Fazer Login
+            </a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success w-100">
+              <i class="bi bi-person-plus"></i> Cadastrar-se
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+
+        <!-- Número de Peito do Atleta -->
+        {% if is_inscrito and inscricao.numero_peito %}
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-award"></i> Seu Número de Peito</h5>
+          </div>
+          <div class="card-body text-center">
+            <span class="badge bg-primary" style="font-size: 2.5rem; padding: 1.2rem;">
+              #{{ inscricao.numero_peito }}
+            </span>
+            <br><small class="text-muted mt-2 d-block">Número atribuído para esta prova</small>
+          </div>
+        </div>
+        {% elif is_inscrito %}
+        <div class="card mb-4">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-clock"></i> Número de Peito</h5>
+          </div>
+          <div class="card-body text-center">
+            <span class="badge bg-warning text-dark" style="font-size: 1.2rem; padding: 0.8rem;">
+              <i class="bi bi-hourglass-split"></i> Aguardando atribuição
+            </span>
+            <br><small class="text-muted mt-2 d-block">O organizador irá atribuir seu número em breve</small>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Histórico de Loops -->
+        {% if loops_historico %}
+        <div class="card mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Histórico de Loops</h5>
+          </div>
+          <div class="card-body">
+            {% if backyard.status.value == 'ATIVO' %}
+            <p class="text-center mb-3">
+              <a href="{{ url_for('backyards.live_view', id=backyard.id) }}" class="btn btn-success btn-sm">
+                <i class="bi bi-broadcast"></i> Visualização em Tempo Real
+              </a>
+            </p>
+            {% endif %}
+            
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Loop</th>
+                    <th>Status</th>
+                    <th>Data/Hora</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for hist_loop in loops_historico %}
+                  <tr>
+                    <td>
+                      <strong>Loop {{ hist_loop.numero_loop }}</strong>
+                    </td>
+                    <td>
+                      {% if hist_loop.status.value == 'ATIVO' %}
+                      <span class="badge bg-success">🟢 ATIVO</span>
+                      {% elif hist_loop.status.value == 'PREPARACAO' %}
+                      <span class="badge bg-warning">🟡 PREPARAÇÃO</span>
+                      {% elif hist_loop.status.value == 'FINALIZADO' %}
+                      <span class="badge bg-info">🏁 FINALIZADO</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if hist_loop.data_inicio %}
+                      {{ hist_loop.data_inicio.strftime('%d/%m/%Y %H:%M') }}
+                      {% else %}
+                      <small class="text-muted">A definir</small>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{{ url_for('backyards.view_loop', id=backyard.id, loop_id=hist_loop.id) }}" 
+                         class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> Detalhes
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            {% if backyard.status.value == 'FINALIZADO' %}
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-info-circle"></i> Esta backyard foi finalizada. 
+              Total de {{ loops_historico|length }} loops realizados.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Ações Rápidas -->
+        <div class="card">
+          <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="bi bi-lightning"></i> Ações</h5>
+          </div>
+          <div class="card-body">
+            <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-outline-primary w-100 mb-2">
+              <i class="bi bi-arrow-left"></i> Voltar à Lista
+            </a>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('profile.dashboard') }}" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-speedometer2"></i> Meu Dashboard
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section><!-- /Backyard Details Section -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto refresh se o evento estiver ativo
+{% if backyard.status.value == 'ATIVO' %}
+setTimeout(() => {
+  location.reload();
+}, 60000); // Refresh a cada 1 minuto
+{% endif %}
+</script>
+{% endblock %}

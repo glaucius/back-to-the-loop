@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Back to the Loop{% endblock %}
+
+{% block content %}
+
+    <!-- Page Title -->
+    <div class="page-title dark-background" data-aos="fade" style="background-image: url({{ url_for('static', filename='img/hero-bg.png') }});">
+      <div class="container position-relative">
+      </div>
+    </div><!-- End Page Title -->
+
+<!-- Login Section -->
+<section id="services" class="services section">
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+          <!-- Section Title -->
+          <div class="container section-title" data-aos="fade-up">
+            <h2>Login</h2>
+            <p>Acesse sua conta e acompanhe suas inscrições</p>
+          </div><!-- End Section Title -->
+
+    <div class="row gy-4 justify-content-center">
+
+      <div class="col-lg-6">
+        <div class="card shadow">
+          <div class="card-header bg-primary text-white text-center">
+            <h3 class="mb-0"><i class="bi bi-box-arrow-in-right"></i> Fazer Login</h3>
+          </div>
+          <div class="card-body p-4">
+            
+            <form method="POST" action="{{ url_for('auth.login') }}">
+              
+              <div class="form-group mb-3">
+                <label for="email" class="form-label">Email *</label>
+                <input type="email" class="form-control" id="email" name="email" required placeholder="Digite seu email">
+              </div>
+
+              <div class="form-group mb-3">
+                <label for="password" class="form-label">Senha *</label>
+                <input type="password" class="form-control" id="password" name="password" required placeholder="Digite sua senha">
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                <label class="form-check-label" for="remember">
+                  Lembrar de mim
+                </label>
+              </div>
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="bi bi-box-arrow-in-right"></i> Entrar
+                </button>
+              </div>
+
+            </form>
+
+            <hr class="my-4">
+
+            <div class="text-center">
+              <p class="mb-2">Ainda não tem uma conta?</p>
+              <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">
+                <i class="bi bi-person-plus"></i> Cadastre-se Grátis
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="200">
+          <i class="bi bi-shield-check flex-shrink-0"></i>
+          <div>
+            <h3>Acesso Seguro</h3>
+            <p>Sua conta é protegida com as melhores práticas de segurança. Seus dados pessoais ficam seguros conosco.</p>
+          </div>
+        </div>
+
+        <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="300">
+          <i class="bi bi-speedometer2 flex-shrink-0"></i>
+          <div>
+            <h3>Dashboard Personalizado</h3>
+            <p>Acesse seu dashboard personalizado e acompanhe suas inscrições, resultados e estatísticas em tempo real.</p>
+          </div>
+        </div>
+
+        <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="400">
+          <i class="bi bi-trophy flex-shrink-0"></i>
+          <div>
+            <h3>Histórico de Corridas</h3>
+            <p>Mantenha um registro completo de todas as suas participações em backyards e acompanhe sua evolução.</p>
+          </div>
+        </div>
+
+        <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="500">
+          <i class="bi bi-bell flex-shrink-0"></i>
+          <div>
+            <h3>Notificações</h3>
+            <p>Receba atualizações sobre novos eventos, mudanças de horários e outras informações importantes.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section><!-- /Login Section -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-focus no campo email quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('email').focus();
+});
+</script>
+{% endblock %}

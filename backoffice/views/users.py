@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from models import db, Backend_Users, Profile
+from services.password_service import PasswordService
 from functools import wraps
 
 users_bp = Blueprint('users', __name__)
@@ -38,7 +39,16 @@ def create_user():
         # Check if email already exists
         existing_user = Backend_Users.query.filter_by(email=email).first()
         if existing_user:
-            flash('Email already exists!', 'danger')
+            flash('Email já existe!', 'danger')
+            profiles = Profile.query.all()
+            return render_template('users/create.html', profiles=profiles)
+        
+        # Validate password
+        password_service = PasswordService()
+        is_valid, errors = password_service.validate_for_flask(password, username=nome, email=email)
+        if not is_valid:
+            for error in errors:
+                flash(f'Erro na senha: {error}', 'danger')
             profiles = Profile.query.all()
             return render_template('users/create.html', profiles=profiles)
         

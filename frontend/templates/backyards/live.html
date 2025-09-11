@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}{{ backyard.nome }} - Tempo Real - Back to the Loop{% endblock %}
+
+{% block content %}
+
+   
+    <!-- Page Title -->
+    <div class="page-title dark-background" data-aos="fade" style="background-image: url({{ url_for('static', filename='img/hero-bg.png') }});">
+      <div class="container position-relative">
+      </div>
+    </div><!-- End Page Title -->
+
+<!-- Backyards Section -->
+<section id="services" class="services section">
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+          <!-- Section Title -->
+          <div class="container section-title" data-aos="fade-up">
+            <h2>ONLINE </h2>
+            <p>{{ backyard.nome }} - AO VIVO</p>
+          </div><!-- End Section Title -->
+    
+    <!-- Filtros -->
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+    <!-- Live Status Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-success">
+          <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">
+              <i class="bi bi-broadcast-pin"></i> {{ backyard.nome }} - AO VIVO
+            </h3>
+            <div class="d-flex align-items-center gap-3">
+              <span class="badge bg-light text-dark">
+                <i class="bi bi-clock"></i> <span id="live-time">00:00:00</span>
+              </span>
+              <button class="btn btn-light btn-sm" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center border-primary">
+          <div class="card-body">
+            <h2 class="text-primary">{{ stats.loop_atual }}</h2>
+            <h6 class="text-muted">Loop Atual</h6>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center border-success">
+          <div class="card-body">
+            <h2 class="text-success">{{ stats.atletas_ativos }}</h2>
+            <h6 class="text-muted">Atletas Ativos</h6>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center border-danger">
+          <div class="card-body">
+            <h2 class="text-danger">{{ stats.atletas_eliminados }}</h2>
+            <h6 class="text-muted">Eliminados</h6>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center border-info">
+          <div class="card-body">
+            <h2 class="text-info">{{ stats.total_inscritos }}</h2>
+            <h6 class="text-muted">Total Inscritos</h6>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {% if loop_atual %}
+    <!-- Current Loop Info -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-play-circle"></i> Loop {{ loop_atual.numero_loop }} 
+              {% if loop_atual.status.value == 'ATIVO' %}
+              <span class="badge bg-success ms-2">EM ANDAMENTO</span>
+              {% elif loop_atual.status.value == 'PREPARACAO' %}
+              <span class="badge bg-warning ms-2">PREPARAÇÃO</span>
+              {% endif %}
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <strong>Distância:</strong> {{ loop_atual.distancia_km }} km
+              </div>
+              <div class="col-md-4">
+                <strong>Tempo Limite:</strong> {{ loop_atual.tempo_limite }} minutos
+              </div>
+              <div class="col-md-4">
+                {% if loop_atual.data_inicio %}
+                <strong>Início:</strong> {{ loop_atual.data_inicio.strftime('%H:%M:%S') }}
+                {% else %}
+                <strong>Status:</strong> Aguardando início
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Active Athletes -->
+    {% if atletas_ativos %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-people"></i> Loop Atual 
+              {% if stats.atletas_concluidos > 0 %}
+              <small class="text-success">({{ stats.atletas_concluidos }} chegaram)</small>
+              {% endif %}
+              {% if stats.atletas_ativos > 0 %}
+              <small class="text-warning">({{ stats.atletas_ativos }} correndo)</small>
+              {% endif %}
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Nº</th>
+                    <th>Atleta</th>
+                    <th>Status</th>
+                    <th>Tempo Início</th>
+                    <th>Tempo Decorrido</th>
+                    <th>Observações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for atleta_loop in atletas_ativos %}
+                  {% set inscricao = atleta_loop.atleta.inscricoes | selectattr('backyard_id', 'equalto', backyard.id) | first %}
+                  <tr>
+                    <td>
+                      {% if inscricao and inscricao.numero_peito %}
+                      <span class="badge bg-primary fs-6">#{{ inscricao.numero_peito }}</span>
+                      {% else %}
+                      <span class="badge bg-secondary fs-6">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          {% if atleta_loop.atleta.imagem_perfil %}
+                          <img src="http://localhost:9000/btl-images/{{ atleta_loop.atleta.imagem_perfil }}" 
+                               class="rounded-circle" alt="{{ atleta_loop.atleta.nome }}" 
+                               style="width: 40px; height: 40px; object-fit: cover;">
+                          {% else %}
+                          <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" 
+                               style="width: 40px; height: 40px; font-size: 18px; font-weight: bold;">
+                            {{ atleta_loop.atleta.nome[0]|upper }}
+                          </div>
+                          {% endif %}
+                        </div>
+                        <div>
+                          <strong>{{ atleta_loop.atleta.nome }}</strong>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      {% if atleta_loop.status.value == 'CONCLUIDO' %}
+                      <span class="badge bg-primary">🏁 CHEGOU</span>
+                      {% else %}
+                      <span class="badge bg-warning">🏃 CORRENDO</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if atleta_loop.tempo_inicio %}
+                      {{ atleta_loop.tempo_inicio.strftime('%H:%M:%S') }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if atleta_loop.status.value == 'CONCLUIDO' and atleta_loop.tempo_total_segundos %}
+                      <strong class="text-success">{{ atleta_loop.get_tempo_formatado() }}</strong>
+                      {% elif atleta_loop.tempo_inicio %}
+                      <span class="timer" data-start="{{ atleta_loop.tempo_inicio.isoformat() }}">
+                        Calculando...
+                      </span>
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>
+                      {{ atleta_loop.observacoes or '-' }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    
+    <!-- Loop History -->
+    {% if loops_historico %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-clock-history"></i> Histórico de Loops
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Loop</th>
+                    <th>Status</th>
+                    <th>Data/Hora</th>
+                    <th>Distância</th>
+                    <th>Tempo Limite</th>
+                    <th>Participantes</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for hist_loop in loops_historico %}
+                  <tr>
+                    <td><strong>Loop {{ hist_loop.numero_loop }}</strong></td>
+                    <td>
+                      {% if hist_loop.status.value == 'ATIVO' %}
+                      <span class="badge bg-success">{{ hist_loop.status.value }}</span>
+                      {% elif hist_loop.status.value == 'FINALIZADO' %}
+                      <span class="badge bg-info">{{ hist_loop.status.value }}</span>
+                      {% else %}
+                      <span class="badge bg-warning">{{ hist_loop.status.value }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if hist_loop.data_inicio %}
+                      {{ hist_loop.data_inicio.strftime('%d/%m/%Y %H:%M') }}
+                      {% else %}
+                      Não iniciado
+                      {% endif %}
+                    </td>
+                    <td>{{ hist_loop.distancia_km }} km</td>
+                    <td>{{ hist_loop.tempo_limite }} min</td>
+                    <td>
+                      <span class="badge bg-light text-dark">{{ hist_loop.atletas|length }} atletas</span>
+                    </td>
+                    <td>
+                      <a href="{{ url_for('backyards.view_loop', id=backyard.id, loop_id=hist_loop.id) }}" 
+                         class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Detalhes
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Eliminated Athletes -->
+    {% if atletas_eliminados %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="bi bi-person-x"></i> Atletas Eliminados ({{ atletas_eliminados|length }})
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Nº</th>
+                    <th>Atleta</th>
+                    <th>Status</th>
+                    <th>Loop de Eliminação</th>
+                    <th>Tempo Final</th>
+                    <th>Observações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for atleta_loop in atletas_eliminados %}
+                  {% set inscricao = atleta_loop.atleta.inscricoes | selectattr('backyard_id', 'equalto', backyard.id) | first %}
+                  <tr>
+                    <td>
+                      {% if inscricao and inscricao.numero_peito %}
+                      <span class="badge bg-primary fs-6">#{{ inscricao.numero_peito }}</span>
+                      {% else %}
+                      <span class="badge bg-secondary fs-6">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          {% if atleta_loop.atleta.imagem_perfil %}
+                          <img src="http://localhost:9000/btl-images/{{ atleta_loop.atleta.imagem_perfil }}" 
+                               class="rounded-circle" alt="{{ atleta_loop.atleta.nome }}" 
+                               style="width: 40px; height: 40px; object-fit: cover;">
+                          {% else %}
+                          <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" 
+                               style="width: 40px; height: 40px; font-size: 18px; font-weight: bold;">
+                            {{ atleta_loop.atleta.nome[0]|upper }}
+                          </div>
+                          {% endif %}
+                        </div>
+                        <div>
+                          <strong>{{ atleta_loop.atleta.nome }}</strong>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      {% if atleta_loop.status.value == 'ELIMINADO' %}
+                      <span class="badge bg-danger">ELIMINADO</span>
+                      {% elif atleta_loop.status.value == 'DNF' %}
+                      <span class="badge bg-warning">DNF</span>
+                      {% elif atleta_loop.status.value == 'DNS' %}
+                      <span class="badge bg-secondary">DNS</span>
+                      {% endif %}
+                    </td>
+                    <td>Loop {{ atleta_loop.loop.numero_loop }}</td>
+                    <td>
+                      {% if atleta_loop.tempo_total_segundos %}
+                      {{ atleta_loop.get_tempo_formatado() }}
+                      {% else %}
+                      -
+                      {% endif %}
+                    </td>
+                    <td>{{ atleta_loop.observacoes or '-' }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Back Button -->
+    <div class="row">
+      <div class="col-12 text-center">
+        <a href="{{ url_for('backyards.view_backyard', id=backyard.id) }}" class="btn btn-secondary">
+          <i class="bi bi-arrow-left"></i> Voltar aos Detalhes
+        </a>
+      </div>
+    </div>
+    
+  </div>
+</section><!-- /Live View Section -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live Clock
+function updateLiveClock() {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('pt-BR');
+  document.getElementById('live-time').textContent = timeString;
+}
+
+// Update clock every second
+setInterval(updateLiveClock, 1000);
+updateLiveClock(); // Initial call
+
+// Timer for active athletes
+function updateTimers() {
+  const timers = document.querySelectorAll('.timer');
+  const now = new Date();
+  
+  timers.forEach(timer => {
+    const startTime = new Date(timer.getAttribute('data-start'));
+    const elapsed = Math.floor((now - startTime) / 1000);
+    
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+    
+    timer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  });
+}
+
+// Update timers every second
+if (document.querySelectorAll('.timer').length > 0) {
+  setInterval(updateTimers, 1000);
+  updateTimers(); // Initial call
+}
+
+// Auto refresh every 30 seconds
+setTimeout(() => {
+  location.reload();
+}, 30000);
+</script>
+{% endblock %}

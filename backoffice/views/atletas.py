@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from models import db, Atleta, Backyard, AtletaBackyard
 from services.image_service import ImageService
+from services.password_service import PasswordService
 from sqlalchemy import func, or_
 import os
 
@@ -118,6 +119,14 @@ def create():
             
             if Atleta.query.filter_by(cpf=cpf).first():
                 flash('CPF já cadastrado.', 'danger')
+                return render_template('atletas/create.html')
+            
+            # Validate password
+            password_service = PasswordService()
+            is_valid, errors = password_service.validate_for_flask(password, username=nome, email=email)
+            if not is_valid:
+                for error in errors:
+                    flash(f'Erro na senha: {error}', 'danger')
                 return render_template('atletas/create.html')
             
             # Handle image upload
