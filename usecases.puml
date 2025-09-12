@@ -1,0 +1,150 @@
+@startuml BTL_UseCases
+
+!theme plain
+skinparam usecase {
+    BackgroundColor #E6F3FF
+    BorderColor #4169E1
+}
+
+' Cores para cada ator
+skinparam actor {
+    BackgroundColor<<admin>> #FF6B6B
+    BorderColor<<admin>> #E55A5A
+    BackgroundColor<<organizador>> #4ECDC4
+    BorderColor<<organizador>> #45B7B8
+    BackgroundColor<<atleta>> #45B7D1
+    BorderColor<<atleta>> #3A9BC1
+    BackgroundColor<<sistema>> #96CEB4
+    BorderColor<<sistema>> #6C5CE7
+}
+
+title BTL (Back to the Loop) - Casos de Uso
+
+' ============================
+' LAYOUT VERTICAL
+' ============================
+
+left to right direction
+
+' Layout horizontal - casos de uso em grid 6x6
+(Fazer Login) as UC01
+(Gerenciar Perfis) as UC02
+(Criar Usuarios) as UC03
+(Listar Usuarios) as UC04
+(Criar Organizacao) as UC05
+(Editar Organizacao) as UC06
+
+(Listar Organizacoes) as UC07
+(Criar Backyard) as UC08
+(Editar Backyard) as UC09
+(Visualizar Backyard) as UC10
+(Listar Backyards) as UC11
+(Upload Imagens) as UC12
+
+(Exportar Dados) as UC13
+(Cadastrar Atleta) as UC14
+(Editar Perfil) as UC15
+(Visualizar Atletas) as UC16
+(Se Inscrever) as UC17
+(Cancelar Inscricao) as UC18
+
+(Gerar Numeros Peito) as UC19
+(Visualizar Inscricoes) as UC20
+(Criar Loop) as UC21
+(Iniciar Loop) as UC22
+(Finalizar Loop) as UC23
+(Registrar Chegada) as UC24
+
+(Marcar Eliminacao) as UC25
+(Verificar Tempo Limite) as UC26
+(Eliminar por Tempo) as UC27
+(Monitorar Loops) as UC28
+(Ver Backyards Publicas) as UC29
+(Acompanhar Tempo Real) as UC30
+
+(Ver Historico) as UC31
+(Iniciar Evento) as UC32
+(Finalizar Evento) as UC33
+(Definir Vencedor) as UC34
+
+' Atores à esquerda com espaçamento e cores
+actor Admin <<admin>>
+actor Organizador <<organizador>>
+actor Atleta <<atleta>>
+actor Sistema <<sistema>>
+
+' Espaçamento entre atores e casos de uso
+Admin -[hidden]- UC01
+Organizador -[hidden]- UC07  
+Atleta -[hidden]- UC13
+Sistema -[hidden]- UC25
+
+' ============================
+' RELACIONAMENTOS COLORIDOS
+' ============================
+
+' Admin - Vermelho (#FF6B6B)
+Admin -[#FF6B6B]-> UC01
+Admin -[#FF6B6B]-> UC02
+Admin -[#FF6B6B]-> UC03
+Admin -[#FF6B6B]-> UC04
+Admin -[#FF6B6B]-> UC05
+Admin -[#FF6B6B]-> UC06
+Admin -[#FF6B6B]-> UC07
+Admin -[#FF6B6B]-> UC08
+Admin -[#FF6B6B]-> UC09
+Admin -[#FF6B6B]-> UC10
+Admin -[#FF6B6B]-> UC11
+Admin -[#FF6B6B]-> UC12
+Admin -[#FF6B6B]-> UC13
+Admin -[#FF6B6B]-> UC16
+Admin -[#FF6B6B]-> UC19
+Admin -[#FF6B6B]-> UC21
+Admin -[#FF6B6B]-> UC22
+Admin -[#FF6B6B]-> UC23
+Admin -[#FF6B6B]-> UC24
+Admin -[#FF6B6B]-> UC25
+Admin -[#FF6B6B]-> UC26
+Admin -[#FF6B6B]-> UC32
+Admin -[#FF6B6B]-> UC33
+Admin -[#FF6B6B]-> UC34
+
+' Organizador - Azul Verde (#4ECDC4)
+Organizador -[#4ECDC4]-> UC01
+Organizador -[#4ECDC4]-> UC06
+Organizador -[#4ECDC4]-> UC08
+Organizador -[#4ECDC4]-> UC09
+Organizador -[#4ECDC4]-> UC10
+Organizador -[#4ECDC4]-> UC11
+Organizador -[#4ECDC4]-> UC12
+Organizador -[#4ECDC4]-> UC13
+Organizador -[#4ECDC4]-> UC16
+Organizador -[#4ECDC4]-> UC19
+Organizador -[#4ECDC4]-> UC20
+Organizador -[#4ECDC4]-> UC21
+Organizador -[#4ECDC4]-> UC22
+Organizador -[#4ECDC4]-> UC23
+Organizador -[#4ECDC4]-> UC24
+Organizador -[#4ECDC4]-> UC25
+Organizador -[#4ECDC4]-> UC26
+Organizador -[#4ECDC4]-> UC32
+Organizador -[#4ECDC4]-> UC33
+Organizador -[#4ECDC4]-> UC34
+
+' Atleta - Azul (#45B7D1)
+Atleta -[#45B7D1]-> UC01
+Atleta -[#45B7D1]-> UC14
+Atleta -[#45B7D1]-> UC15
+Atleta -[#45B7D1]-> UC17
+Atleta -[#45B7D1]-> UC18
+Atleta -[#45B7D1]-> UC20
+Atleta -[#45B7D1]-> UC29
+Atleta -[#45B7D1]-> UC30
+Atleta -[#45B7D1]-> UC31
+
+' Sistema - Verde (#96CEB4)
+Sistema -[#96CEB4]-> UC26
+Sistema -[#96CEB4]-> UC27
+Sistema -[#96CEB4]-> UC28
+
+@enduml

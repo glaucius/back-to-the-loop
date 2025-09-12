@@ -1,0 +1,172 @@
+@startuml BTL_Datamodel
+
+!theme plain
+skinparam linetype ortho
+
+title BTL (Back to the Loop) - Datamodel UML
+
+' ============================
+' ENUMS
+' ============================
+
+enum BackyardStatus {
+    PREPARACAO
+    ATIVO
+    PAUSADO
+    FINALIZADO
+}
+
+enum LoopStatus {
+    PREPARACAO
+    ATIVO
+    FINALIZADO
+}
+
+enum AtletaLoopStatus {
+    ATIVO
+    CONCLUIDO
+    ELIMINADO
+    DNF
+    DNS
+}
+
+' ============================
+' ENTIDADES PRINCIPAIS
+' ============================
+
+class Profile {
+    +id: Integer
+    +nome: String
+    +data_criacao: DateTime
+    +data_ultima_atualizacao: DateTime
+}
+
+class Backend_Users {
+    +id: Integer
+    +nome: String
+    +email: String
+    +password: String
+    +profile_id: Integer
+    +data_criacao: DateTime
+    +data_ultima_atualizacao: DateTime
+    +is_admin(): Boolean
+    +is_organizador(): Boolean
+}
+
+class Organizacao {
+    +id: Integer
+    +nome: String
+    +organizador: Integer
+    +data_criacao: DateTime
+    +data_ultima_atualizacao: DateTime
+}
+
+class Backyard {
+    +id: Integer
+    +nome: String
+    +organizador: Integer
+    +descricao: Text
+    +endereco: String
+    +cidade: String
+    +estado: String
+    +pais: String
+    +profile_picture_path: String
+    +logo_path: String
+    +data_evento: DateTime
+    +status: BackyardStatus
+    +capacidade: Integer
+    +numero_inicial: Integer
+    +data_criacao: DateTime
+    +data_ultima_atualizacao: DateTime
+    --
+    +numero_final: Integer
+    +get_proximo_numero_peito(): Integer
+    +gerar_numeros_peito(): Integer
+}
+
+class Atleta {
+    +id: Integer
+    +nome: String
+    +cpf: String
+    +email: String
+    +password: String
+    +data_nascimento: Date
+    +sexo: String
+    +imagem_perfil: String
+    +endereco: String
+    +cidade: String
+    +estado: String
+    +pais: String
+    +criado_em: DateTime
+    +atualizado_em: DateTime
+}
+
+class Loop {
+    +id: Integer
+    +backyard_id: Integer
+    +numero_loop: Integer
+    +status: LoopStatus
+    +data_inicio: DateTime
+    +data_fim: DateTime
+    +tempo_limite: Integer
+    +distancia_km: Float
+    +criado_em: DateTime
+    --
+    +get_atletas_ativos(): List
+    +get_atletas_concluidos(): List
+    +get_atletas_eliminados(): List
+}
+
+class AtletaBackyard {
+    +id: Integer
+    +atleta_id: Integer
+    +backyard_id: Integer
+    +numero_peito: Integer
+    +data_inscricao: DateTime
+    +status_inscricao: String
+    +posicao_final: Integer
+    +voltas_completadas: Integer
+    +tempo_total: Time
+}
+
+class AtletaLoop {
+    +id: Integer
+    +atleta_id: Integer
+    +loop_id: Integer
+    +status: AtletaLoopStatus
+    +tempo_inicio: DateTime
+    +tempo_fim: DateTime
+    +tempo_total_segundos: Integer
+    +observacoes: Text
+    +criado_em: DateTime
+    +atualizado_em: DateTime
+    +get_tempo_formatado(): String
+}
+
+' ============================
+' RELACIONAMENTOS
+' ============================
+
+Profile ||--o{ Backend_Users
+Backend_Users ||--o{ Organizacao
+Organizacao ||--o{ Backyard
+Backyard ||--o{ Loop
+Atleta ||--o{ AtletaBackyard
+Backyard ||--o{ AtletaBackyard
+Atleta ||--o{ AtletaLoop
+Loop ||--o{ AtletaLoop
+
+Backyard --> BackyardStatus
+Loop --> LoopStatus
+AtletaLoop --> AtletaLoopStatus
+
+' ============================
+' NOTAS
+' ============================
+
+note right of Backend_Users : Usuários do backoffice\n(Admin, Organizador)
+note right of Atleta : Usuários do frontend\n(Atletas participantes)
+note bottom of AtletaBackyard : Inscrições dos atletas\nem eventos específicos
+note bottom of AtletaLoop : Participação em loops\nindividuais com tempos
+
+@enduml

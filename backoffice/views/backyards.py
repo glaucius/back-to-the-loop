@@ -1,10 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, Response
 from flask_login import login_required, current_user
-from models import db, Backyard, Organizacao, AtletaBackyard, Atleta
+from models import db, Backyard, Organizacao, AtletaBackyard, Atleta, Loop, AtletaLoop
 from services.image_service import ImageService
 from functools import wraps
 from sqlalchemy import func, or_, case
 from datetime import datetime, date
+import csv
+import json
+import io
 
 backyards_bp = Blueprint('backyards', __name__)
 
@@ -596,3 +599,201 @@ def delete_image(id, image_type):
         flash(f'Error deleting image: {str(e)}', 'danger')
     
     return redirect(url_for('backyards.edit_backyard', id=id))
+
+@backyards_bp.route('/export/<int:id>')
+@login_required
+@organizador_or_admin_required
+def export_backyard_data(id):
+    """Exportar dados da backyard em formato CSV ou JSON"""
+    backyard = Backyard.query.get_or_404(id)
+    
+    # Verificar permissão
+    if not current_user.is_admin():
+        user_orgs = Organizacao.query.filter_by(organizador=current_user.id).all()
+        org_ids = [org.id for org in user_orgs]
+        
+        if backyard.organizador not in org_ids:
+            flash('Access denied. You can only export data from your organizations.', 'danger')
+            return redirect(url_for('backyards.list_backyards'))
+    
+    # Buscar dados completos
+    atletas_inscritos = db.session.query(AtletaBackyard, Atleta).join(
+        Atleta, AtletaBackyard.atleta_id == Atleta.id
+    ).filter(AtletaBackyard.backyard_id == id).order_by(AtletaBackyard.numero_peito.asc()).all()
+    
+    # Buscar loops se existirem
+    loops = Loop.query.filter_by(backyard_id=id).order_by(Loop.numero_loop).all()
+    
+    # Buscar dados dos atletas em loops
+    atletas_loops = {}
+    for loop in loops:
+        atletas_no_loop = AtletaLoop.query.filter_by(loop_id=loop.id).all()
+        atletas_loops[loop.id] = atletas_no_loop
+    
+    format_type = request.args.get('format', 'csv').lower()
+    
+    if format_type == 'csv':
+        return _export_csv(backyard, atletas_inscritos, loops, atletas_loops)
+    elif format_type == 'json':
+        return _export_json(backyard, atletas_inscritos, loops, atletas_loops)
+    else:
+        flash('Formato de exportação inválido!', 'danger')
+        return redirect(url_for('backyards.view_backyard', id=id))
+
+def _export_csv(backyard, atletas_inscritos, loops, atletas_loops):
+    """Exportar dados em formato CSV"""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Cabeçalho do arquivo
+    writer.writerow(['# DADOS DA BACKYARD'])
+    writer.writerow(['Nome', backyard.nome])
+    writer.writerow(['Organizacao', backyard.organizacao.nome])
+    writer.writerow(['Data do Evento', backyard.data_evento.strftime('%d/%m/%Y %H:%M') if backyard.data_evento else 'Não definida'])
+    writer.writerow(['Status', backyard.status.value])
+    writer.writerow(['Cidade', backyard.cidade or 'Não informada'])
+    writer.writerow(['Estado', backyard.estado or 'Não informado'])
+    writer.writerow(['Capacidade', str(backyard.capacidade)])
+    writer.writerow([''])  # Linha em branco
+    
+    # Cabeçalho dos atletas
+    writer.writerow(['# ATLETAS INSCRITOS'])
+    writer.writerow([
+        'Numero_Peito', 'Nome_Atleta', 'CPF', 'Email', 
+        'Data_Nascimento', 'Cidade', 'Estado', 'Status_Inscricao', 'Data_Inscricao'
+    ])
+    
+    # Dados dos atletas
+    for inscricao, atleta in atletas_inscritos:
+        writer.writerow([
+            inscricao.numero_peito or '',
+            atleta.nome,
+            atleta.cpf or '',
+            atleta.email or '',
+            atleta.data_nascimento.strftime('%d/%m/%Y') if atleta.data_nascimento else '',
+            atleta.cidade or '',
+            atleta.estado or '',
+            inscricao.status_inscricao,
+            inscricao.data_inscricao.strftime('%d/%m/%Y %H:%M') if inscricao.data_inscricao else ''
+        ])
+    
+    # Se existirem loops, adicionar dados dos loops
+    if loops:
+        writer.writerow([''])  # Linha em branco
+        writer.writerow(['# HISTORICO DE LOOPS'])
+        writer.writerow([
+            'Numero_Loop', 'Status_Loop', 'Data_Inicio', 'Data_Fim', 
+            'Tempo_Limite_Segundos', 'Distancia_KM', 'Total_Participantes'
+        ])
+        
+        for loop in loops:
+            participantes = len(atletas_loops.get(loop.id, []))
+            writer.writerow([
+                loop.numero_loop,
+                loop.status.value,
+                loop.data_inicio.strftime('%d/%m/%Y %H:%M') if loop.data_inicio else '',
+                loop.data_fim.strftime('%d/%m/%Y %H:%M') if loop.data_fim else '',
+                loop.tempo_limite or '',
+                loop.distancia_km or '',
+                participantes
+            ])
+    
+    csv_data = output.getvalue()
+    output.close()
+    
+    filename = f"backyard_{backyard.id}_{backyard.nome.replace(' ', '_')}_dados.csv"
+    
+    response = Response(csv_data, mimetype='text/csv')
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+def _export_json(backyard, atletas_inscritos, loops, atletas_loops):
+    """Exportar dados em formato JSON"""
+    
+    # Dados da backyard
+    backyard_data = {
+        'id': backyard.id,
+        'nome': backyard.nome,
+        'organizacao': {
+            'id': backyard.organizacao.id,
+            'nome': backyard.organizacao.nome,
+            'organizador': backyard.organizacao.user.nome if backyard.organizacao.user else None
+        },
+        'data_evento': backyard.data_evento.isoformat() if backyard.data_evento else None,
+        'status': backyard.status.value,
+        'cidade': backyard.cidade,
+        'estado': backyard.estado,
+        'capacidade': backyard.capacidade,
+        'descricao': backyard.descricao,
+        'data_criacao': backyard.data_criacao.isoformat() if backyard.data_criacao else None
+    }
+    
+    # Dados dos atletas
+    atletas_data = []
+    for inscricao, atleta in atletas_inscritos:
+        atleta_info = {
+            'inscricao': {
+                'numero_peito': inscricao.numero_peito,
+                'status_inscricao': inscricao.status_inscricao,
+                'data_inscricao': inscricao.data_inscricao.isoformat() if inscricao.data_inscricao else None
+            },
+            'atleta': {
+                'id': atleta.id,
+                'nome': atleta.nome,
+                'cpf': atleta.cpf,
+                'email': atleta.email,
+                'data_nascimento': atleta.data_nascimento.isoformat() if atleta.data_nascimento else None,
+                'cidade': atleta.cidade,
+                'estado': atleta.estado,
+                'sexo': atleta.sexo
+            }
+        }
+        atletas_data.append(atleta_info)
+    
+    # Dados dos loops
+    loops_data = []
+    for loop in loops:
+        participantes_loop = atletas_loops.get(loop.id, [])
+        participantes_data = []
+        
+        for atleta_loop in participantes_loop:
+            participante = {
+                'atleta_id': atleta_loop.atleta_id,
+                'status': atleta_loop.status.value,
+                'tempo_inicio': atleta_loop.tempo_inicio.isoformat() if atleta_loop.tempo_inicio else None,
+                'tempo_fim': atleta_loop.tempo_fim.isoformat() if atleta_loop.tempo_fim else None,
+                'tempo_total_segundos': atleta_loop.tempo_total_segundos,
+                'observacoes': atleta_loop.observacoes
+            }
+            participantes_data.append(participante)
+        
+        loop_info = {
+            'id': loop.id,
+            'numero_loop': loop.numero_loop,
+            'status': loop.status.value,
+            'data_inicio': loop.data_inicio.isoformat() if loop.data_inicio else None,
+            'data_fim': loop.data_fim.isoformat() if loop.data_fim else None,
+            'tempo_limite': loop.tempo_limite,
+            'distancia_km': loop.distancia_km,
+            'participantes': participantes_data
+        }
+        loops_data.append(loop_info)
+    
+    # Estrutura final
+    export_data = {
+        'backyard': backyard_data,
+        'atletas_inscritos': atletas_data,
+        'loops_historico': loops_data,
+        'estatisticas': {
+            'total_inscritos': len(atletas_inscritos),
+            'total_loops': len(loops),
+            'data_exportacao': datetime.now().isoformat()
+        }
+    }
+    
+    json_data = json.dumps(export_data, ensure_ascii=False, indent=2)
+    filename = f"backyard_{backyard.id}_{backyard.nome.replace(' ', '_')}_dados.json"
+    
+    response = Response(json_data, mimetype='application/json')
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

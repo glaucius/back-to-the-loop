@@ -504,6 +504,28 @@ def marcar_atleta_concluido(atleta_loop_id):
         print(f"DEBUG: Tempo decorrido: {tempo_decorrido}")
         print(f"DEBUG: Tempo total em segundos: {tempo_total_segundos}")
         
+        # REGRA CRÍTICA DO BACKYARD ULTRA: Verificar se excedeu o tempo limite
+        if tempo_total_segundos > loop.tempo_limite:
+            # Atleta excedeu o tempo limite - ELIMINADO automaticamente
+            atleta_loop.status = AtletaLoopStatus.ELIMINADO
+            atleta_loop.tempo_fim = tempo_atual
+            atleta_loop.tempo_total_segundos = tempo_total_segundos
+            atleta_loop.observacoes = f"ELIMINADO - Excedeu tempo limite ({tempo_total_segundos}s > {loop.tempo_limite}s)"
+            atleta_loop.atualizado_em = datetime.utcnow()
+            
+            db.session.commit()
+            print(f"DEBUG: Atleta ELIMINADO por exceder tempo limite: {tempo_total_segundos}s > {loop.tempo_limite}s")
+            
+            return jsonify({
+                'success': False,
+                'message': f'Atleta ELIMINADO! Tempo {tempo_total_segundos}s excedeu o limite de {loop.tempo_limite}s',
+                'status': 'ELIMINADO',
+                'tempo_total': tempo_total_segundos,
+                'tempo_limite': loop.tempo_limite,
+                'eliminated': True
+            })
+        
+        # Atleta completou dentro do tempo limite
         atleta_loop.status = AtletaLoopStatus.CONCLUIDO
         atleta_loop.tempo_fim = tempo_atual
         atleta_loop.tempo_total_segundos = tempo_total_segundos
@@ -610,4 +632,72 @@ def marcar_atleta_eliminado(atleta_loop_id):
         
     except Exception as e:
         db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+def eliminar_atletas_por_tempo(loop_id):
+    """
+    Função utilitária para eliminar automaticamente atletas que excederam o tempo limite
+    Retorna número de atletas eliminados
+    """
+    try:
+        loop = Loop.query.get(loop_id)
+        if not loop or loop.status != LoopStatus.ATIVO:
+            return 0
+        
+        if not loop.data_inicio:
+            return 0  # Não pode verificar tempo sem data de início
+        
+        tempo_atual = datetime.utcnow()
+        tempo_decorrido = tempo_atual - loop.data_inicio
+        tempo_total_segundos = int(tempo_decorrido.total_seconds())
+        
+        # Se ainda não excedeu o tempo limite, não fazer nada
+        if tempo_total_segundos <= loop.tempo_limite:
+            return 0
+        
+        # Buscar atletas ativos que ainda não chegaram
+        atletas_ativos = AtletaLoop.query.filter_by(
+            loop_id=loop_id,
+            status=AtletaLoopStatus.ATIVO
+        ).all()
+        
+        atletas_eliminados = 0
+        
+        for atleta_loop in atletas_ativos:
+            # Eliminar por tempo limite
+            atleta_loop.status = AtletaLoopStatus.ELIMINADO
+            atleta_loop.tempo_fim = tempo_atual
+            atleta_loop.tempo_total_segundos = tempo_total_segundos
+            atleta_loop.observacoes = f"ELIMINADO AUTOMATICAMENTE - Excedeu tempo limite ({tempo_total_segundos}s > {loop.tempo_limite}s)"
+            atleta_loop.atualizado_em = datetime.utcnow()
+            atletas_eliminados += 1
+            
+            print(f"DEBUG: Atleta {atleta_loop.atleta_id} eliminado automaticamente por tempo no loop {loop_id}")
+        
+        if atletas_eliminados > 0:
+            db.session.commit()
+            print(f"DEBUG: {atletas_eliminados} atletas eliminados automaticamente no loop {loop_id}")
+        
+        return atletas_eliminados
+        
+    except Exception as e:
+        print(f"ERRO ao eliminar atletas por tempo: {str(e)}")
+        db.session.rollback()
+        return 0
+
+@loops_bp.route('/loop/<int:loop_id>/check_time_limits', methods=['POST'])
+@login_required
+@organizador_or_admin_required
+def check_time_limits(loop_id):
+    """Endpoint para verificar e eliminar atletas que excederam tempo limite"""
+    try:
+        atletas_eliminados = eliminar_atletas_por_tempo(loop_id)
+        
+        return jsonify({
+            'success': True,
+            'message': f'{atletas_eliminados} atletas eliminados por tempo limite',
+            'atletas_eliminados': atletas_eliminados
+        })
+        
+    except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
