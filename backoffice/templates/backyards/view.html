@@ -21,9 +21,14 @@
         <img src="{{ logo_url }}" style="height: 40px; margin-left: 10px;" alt="Logo" class="rounded">
         {% endif %}
       </h1>
-      <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info">
-        <i class="fas fa-edit"></i> Editar
-      </a>
+      <div class="btn-group" role="group">
+        <a href="{{ url_for('backyards.edit_backyard', id=backyard.id) }}" class="btn btn-info">
+          <i class="fas fa-edit"></i> Editar
+        </a>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#exportModal">
+          <i class="fas fa-download"></i> Exportar Dados
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -474,5 +479,98 @@ function showNotification(message, type) {
         notification.alert('close');
     }, 4000);
 }
+
+// Função para exportar dados
+function exportData(format) {
+    console.log('Iniciando exportação com formato:', format);
+    console.log('URL de exportação:', `{{ url_for('backyards.export_backyard_data', id=backyard.id) }}`);
+    
+    // Criar form para submit com autenticação
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = `{{ url_for('backyards.export_backyard_data', id=backyard.id) }}`;
+    form.target = '_blank'; // Abrir em nova aba para download
+    
+    // Adicionar input hidden com o formato
+    const formatInput = document.createElement('input');
+    formatInput.type = 'hidden';
+    formatInput.name = 'format';
+    formatInput.value = format;
+    form.appendChild(formatInput);
+    
+    // Adicionar form ao DOM e submeter
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    
+    // Fechar o modal
+    $('#exportModal').modal('hide');
+    
+    // Mostrar notificação de sucesso
+    showNotification(`Iniciando download em formato ${format.toUpperCase()}...`, 'success');
+}
 </script>
+
+<!-- Modal de Exportação -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">
+                    <i class="fas fa-download"></i> Exportar Dados da Backyard
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Escolha o formato para exportar os dados da backyard <strong>{{ backyard.nome }}</strong>:</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-csv fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">CSV</h5>
+                                <p class="card-text">Formato ideal para planilhas (Excel, Google Sheets)</p>
+                                <button type="button" class="btn btn-primary" onclick="exportData('csv')">
+                                    <i class="fas fa-download"></i> Exportar CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-code fa-3x text-success mb-3"></i>
+                                <h5 class="card-title">JSON</h5>
+                                <p class="card-text">Formato estruturado para APIs e sistemas</p>
+                                <button type="button" class="btn btn-success" onclick="exportData('json')">
+                                    <i class="fas fa-download"></i> Exportar JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6><i class="fas fa-info-circle"></i> Dados incluídos:</h6>
+                    <ul class="mb-0">
+                        <li>Informações gerais da backyard</li>
+                        <li>Lista completa de atletas inscritos</li>
+                        <li>Números de peito atribuídos</li>
+                        <li>Status das inscrições</li>
+                        <li>Histórico de loops (se aplicável)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

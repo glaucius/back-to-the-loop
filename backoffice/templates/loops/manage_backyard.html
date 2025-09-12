@@ -168,6 +168,12 @@
                           title="Finalizar este loop e criar o próximo">
                     <i class="fas fa-flag-checkered"></i> Finalizar Loop
                   </button>
+                  <button type="button" 
+                          class="btn btn-danger btn-sm btn-check-time-limits ml-1" 
+                          data-loop-id="{{ loop_atual.id }}"
+                          title="Verificar e eliminar atletas que excederam tempo limite">
+                    <i class="fas fa-clock"></i> Verificar Tempo
+                  </button>
                 {% endif %}
               </div>
             </div>
@@ -655,6 +661,48 @@ $(document).ready(function() {
         showNotification('Erro ao finalizar loop: ' + error, 'error');
         button.prop('disabled', false);
         button.html('<i class="fas fa-flag-checkered"></i> Finalizar Loop');
+      }
+    });
+  });
+  
+  // Botão Verificar Tempo Limite
+  $('.btn-check-time-limits').click(function() {
+    const loopId = $(this).data('loop-id');
+    const button = $(this);
+    
+    if (!confirm('Verificar e eliminar automaticamente atletas que excederam o tempo limite?')) {
+      return;
+    }
+    
+    button.prop('disabled', true);
+    button.html('<i class="fas fa-spinner fa-spin"></i> Verificando...');
+    
+    $.ajax({
+      url: `/loops/loop/${loopId}/check_time_limits`,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          if (response.atletas_eliminados > 0) {
+            showNotification(`${response.atletas_eliminados} atletas eliminados automaticamente por tempo limite!`, 'warning');
+          } else {
+            showNotification('Nenhum atleta excedeu o tempo limite ainda.', 'info');
+          }
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else {
+          showNotification(response.message, 'error');
+        }
+        
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-clock"></i> Verificar Tempo');
+      },
+      error: function(xhr, status, error) {
+        console.error('Erro ao verificar tempo limite:', {xhr, status, error});
+        showNotification('Erro ao verificar tempo limite: ' + error, 'error');
+        button.prop('disabled', false);
+        button.html('<i class="fas fa-clock"></i> Verificar Tempo');
       }
     });
   });

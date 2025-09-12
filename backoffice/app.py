@@ -224,5 +224,13 @@ app.register_blueprint(loops_bp, url_prefix='/loops')
 
 # Database initialization is handled by init_db.py
 
+# Inicializar scheduler para verificação automática de tempo limite
+try:
+    from scheduler import init_scheduler
+    init_scheduler(app)
+    print("BTL Scheduler ativado - verificação automática de tempo limite a cada 30 segundos")
+except Exception as e:
+    print(f"AVISO: Não foi possível inicializar o scheduler: {str(e)}")
+
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0')
