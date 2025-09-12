@@ -129,12 +129,30 @@ class Backyard(db.Model):
             numero_peito=None
         ).order_by(AtletaBackyard.data_inscricao).all()
         
+        if not inscricoes_sem_numero:
+            return 0
+        
+        # Buscar todos os números já utilizados nesta backyard
+        numeros_existentes = set()
+        inscricoes_com_numero = AtletaBackyard.query.filter_by(backyard_id=self.id).filter(
+            AtletaBackyard.numero_peito.isnot(None)
+        ).all()
+        
+        for inscricao in inscricoes_com_numero:
+            numeros_existentes.add(inscricao.numero_peito)
+        
+        # Encontrar próximos números disponíveis
         numero_atual = self.numero_inicial
         numeros_atribuidos = 0
         
         for inscricao in inscricoes_sem_numero:
+            # Procurar próximo número disponível
+            while numero_atual in numeros_existentes and numero_atual <= self.numero_final:
+                numero_atual += 1
+            
             if numero_atual <= self.numero_final:
                 inscricao.numero_peito = numero_atual
+                numeros_existentes.add(numero_atual)  # Adicionar à lista para evitar duplicatas
                 numero_atual += 1
                 numeros_atribuidos += 1
             else:

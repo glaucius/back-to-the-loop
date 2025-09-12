@@ -72,6 +72,33 @@ services:
     networks:
       - btl_network
 
+  frontend:
+    image: tcc-frontend:latest
+    container_name: btl-frontend
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=your-frontend-secret-key-change-in-production
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USER=btl_user
+      - DB_PASSWORD=btl_password
+      - DB_NAME=btl_db
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_PUBLIC_ENDPOINT=localhost:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_BUCKET=btl-images
+    ports:
+      - "3000:5000"
+    volumes:
+      - ./frontend:/app
+      - ./backoffice:/app/backoffice
+    depends_on:
+      - mariadb
+      - minio
+    networks:
+      - btl_network
+
 volumes:
   mariadb_data:
   minio_data:

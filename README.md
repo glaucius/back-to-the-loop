@@ -82,6 +82,30 @@ O BTL facilita a organização e gestão destes eventos únicos, permitindo que 
 - **UX Otimizada**: Navegação intuitiva e eficiente
 - **Feedback Visual**: Badges, cores e ícones informativos
 
+#### 🆕 **Frontend para Atletas**
+- **Portal Público**: Interface moderna e responsiva para atletas
+- **Sistema de Cadastro**: Registro completo com validações
+- **Login de Atletas**: Autenticação independente do backoffice
+- **Upload de Fotos**: Imagens de perfil via MinIO
+- **Dashboard Pessoal**: Painel com inscrições e estatísticas
+
+#### 🆕 **Sistema de Inscrições Online**
+- **Inscrições Abertas**: Atletas podem se inscrever em backyards disponíveis
+- **Status de Inscrição**: inscrito, pendente, cancelado
+- **Números de Peito**: Atribuição automática na inscrição
+- **Gestão de Vagas**: Controle de capacidade máxima
+- **Minhas Inscrições**: Visualização completa das participações
+
+#### 🆕 **Visualização em Tempo Real**
+- **Página Live**: Acompanhamento ao vivo de backyards ativas
+- **Status dos Atletas**: 
+  - 🏃 **CORRENDO**: Atletas ativos no loop atual
+  - 🏁 **CHEGOU**: Atletas que completaram o loop (no topo)
+  - ❌ **ELIMINADOS**: Histórico de eliminações
+- **Detalhes dos Loops**: Visualização específica de cada volta
+- **Estatísticas Dinâmicas**: Contadores em tempo real
+- **Histórico Completo**: Todos os loops anteriores organizados
+
 ## 🏗️ Arquitetura
 
 ### Stack Tecnológica
@@ -120,6 +144,26 @@ btl/
 │   │   └── img/               # Imagens locais
 │   ├── services/              # Serviços (upload, etc.)
 │   │   └── image_service.py   # Integração com MinIO
+│   ├── requirements.txt       # Dependências Python
+│   └── Dockerfile             # Configuração do container
+├── frontend/                   # 🆕 Aplicação Flask para atletas
+│   ├── app.py                 # Aplicação principal do frontend
+│   ├── models.py              # Modelos compartilhados com backoffice
+│   ├── views/                 # Controllers do frontend
+│   │   ├── auth.py            # Autenticação de atletas
+│   │   ├── home.py            # Páginas públicas
+│   │   ├── profile.py         # Perfil do atleta
+│   │   └── backyards.py       # Visualização de eventos
+│   ├── templates/             # Templates HTML modernas
+│   │   ├── base.html          # Template base responsivo
+│   │   ├── home/              # Páginas públicas
+│   │   ├── auth/              # Login e registro
+│   │   ├── profile/           # Dashboard do atleta
+│   │   └── backyards/         # Visualizações de eventos
+│   ├── static/                # Arquivos estáticos modernos
+│   │   ├── css/               # Bootstrap customizado
+│   │   ├── js/                # JavaScript interativo
+│   │   └── vendor/            # Bibliotecas externas
 │   ├── requirements.txt       # Dependências Python
 │   └── Dockerfile             # Configuração do container
 ├── 🛠️ Scripts Utilitários:
@@ -215,7 +259,8 @@ docker compose up -d --build
 
 ### 3. Acesse os Serviços
 
-- **🖥️ Backoffice**: http://localhost:5555
+- **🖥️ Backoffice** (Organizadores): http://localhost:5555
+- **🏃‍♂️ Frontend** (Atletas): http://localhost:3000 🆕
 - **🗄️ PhpMyAdmin**: http://localhost:8888
 - **📁 MinIO Console**: http://localhost:9001
 - **🔌 MinIO API**: http://localhost:9000
@@ -311,8 +356,14 @@ O projeto inclui vários scripts para facilitar o desenvolvimento e manutenção
 # Setup completo do zero (recomendado)
 ./setup_fresh.sh
 
-# Rebuild rápido da aplicação
+# Rebuild rápido de ambas aplicações
+./build_all.sh
+
+# Rebuild apenas do backoffice
 ./build.sh
+
+# Rebuild apenas do frontend 🆕
+./build_frontend.sh
 
 # Inicialização automática (já incluída no setup_fresh.sh)
 docker compose up --build
@@ -391,23 +442,50 @@ docker exec btl-mariadb mysqldump -u btl_user -pbtl_password btl_db > "backup_$(
 
 ## 🎯 Funcionalidades por Tela
 
-### 📊 Dashboard (`/`)
+### 🖥️ **Backoffice** (http://localhost:5555)
+
+#### 📊 Dashboard (`/`)
 - Estatísticas gerais do sistema
 - Ações rápidas (criar usuário, organização, backyard)
 - Widgets com dados em tempo real
 
-### 🏃‍♂️ Gestão de Backyards (`/backyards/`)
+#### 🏃‍♂️ Gestão de Backyards (`/backyards/`)
 - **Lista**: Filtros inteligentes, ordenação por prioridade
 - **Criar**: Formulário completo com números de peito
 - **Editar**: Atualização de todos os campos
 - **Visualizar**: Detalhes completos em cards organizados
 
-### ⏱️ Gestão de Loops (`/loops/backyard/<id>`)
+#### ⏱️ Gestão de Loops (`/loops/backyard/<id>`)
 - **Painel ao Vivo**: Status em tempo real
 - **Controle de Atletas**: Botões "Chegou" e "Eliminar"
 - **Números de Peito**: Sistema visual com badges
 - **Histórico**: Loops anteriores em ordem cronológica
 - **Geração de Números**: Atribuição automática sob demanda
+
+### 🏃‍♂️ **Frontend para Atletas** (http://localhost:3000) 🆕
+
+#### 🏠 Home (`/`)
+- **Landing Page**: Informações sobre backyard ultras
+- **Próximos Eventos**: Lista de backyards disponíveis
+- **Sobre**: Explicação da modalidade
+- **Contato**: Formulário de contato
+
+#### 🔐 Autenticação (`/auth/`)
+- **Login** (`/auth/login`): Acesso de atletas cadastrados
+- **Registro** (`/auth/register`): Cadastro completo com validações
+- **Logout**: Encerramento seguro da sessão
+
+#### 📋 Backyards (`/backyards/`)
+- **Lista** (`/backyards/`): Eventos disponíveis para inscrição
+- **Detalhes** (`/backyards/<id>`): Informações completas + inscrição
+- **Live** (`/backyards/<id>/live`): Visualização em tempo real 🔥
+- **Loop Específico** (`/backyards/<id>/loop/<loop_id>`): Detalhes do loop
+
+#### 👤 Perfil (`/profile/`)
+- **Dashboard** (`/profile/dashboard`): Resumo pessoal do atleta
+- **Editar Perfil** (`/profile/edit`): Atualização de dados + foto
+- **Minhas Inscrições** (`/profile/my-backyards`): Lista de participações
+- **Alterar Senha** (`/profile/change-password`): Segurança da conta
 
 ## 🛠️ Troubleshooting
 
@@ -472,14 +550,18 @@ docker compose up --build
 - [x] Interface traduzida para português
 - [x] Upload de imagens via MinIO
 - [x] Dashboard com estatísticas
+- [x] **Frontend público para atletas** 🆕
+- [x] **Sistema de inscrições online** 🆕
+- [x] **Visualização em tempo real** 🆕
+- [x] **Interface moderna para atletas** 🆕
 
 ### 🎯 Próximas Funcionalidades
-- [ ] Frontend público para atletas
-- [ ] Sistema de inscrições online
 - [ ] Relatórios em PDF
 - [ ] API REST para integrações
 - [ ] Notificações em tempo real
 - [ ] Sistema de ranking
+- [ ] Aplicativo móvel
+- [ ] Streaming ao vivo
 
 ## 📄 Documentação
 

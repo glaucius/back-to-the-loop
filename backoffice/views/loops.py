@@ -365,6 +365,16 @@ def create_next_loop(loop_id):
         loop_atual.status = LoopStatus.FINALIZADO
         loop_atual.data_fim = datetime.utcnow()
         
+        # REGRA DE NEGÓCIO: Atletas que ainda estavam ATIVOS quando o evento foi finalizado devem virar DNF
+        atletas_ativos_nao_concluidos = AtletaLoop.query.filter_by(
+            loop_id=loop_id,
+            status=AtletaLoopStatus.ATIVO
+        ).all()
+        
+        for atleta_loop in atletas_ativos_nao_concluidos:
+            atleta_loop.status = AtletaLoopStatus.DNF
+            atleta_loop.observacoes = "DNF - Loop finalizado antes da conclusão"
+        
         db.session.commit()
         
         return jsonify({
@@ -377,6 +387,16 @@ def create_next_loop(loop_id):
         # Finalizar loop atual
         loop_atual.status = LoopStatus.FINALIZADO
         loop_atual.data_fim = datetime.utcnow()
+        
+        # REGRA DE NEGÓCIO: Atletas que ainda estavam ATIVOS quando o loop foi finalizado devem virar DNF
+        atletas_ativos_nao_concluidos = AtletaLoop.query.filter_by(
+            loop_id=loop_id,
+            status=AtletaLoopStatus.ATIVO
+        ).all()
+        
+        for atleta_loop in atletas_ativos_nao_concluidos:
+            atleta_loop.status = AtletaLoopStatus.DNF
+            atleta_loop.observacoes = "DNF - Loop finalizado antes da conclusão"
         
         # Criar próximo loop
         proximo_loop = Loop(

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Backyards - Back to the Loop{% endblock %}
+
+{% block content %}
+
+    <!-- Page Title -->
+    <div class="page-title dark-background" data-aos="fade" style="background-image: url({{ url_for('static', filename='img/hero-bg.png') }});">
+      <div class="container position-relative">
+      </div>
+    </div><!-- End Page Title -->
+
+<!-- Backyards Section -->
+<section id="services" class="services section">
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+          <!-- Section Title -->
+          <div class="container section-title" data-aos="fade-up">
+            <h2>Agenda</h2>
+            <p>Próximas backyards<br></p>
+          </div><!-- End Section Title -->
+    
+    <!-- Filtros -->
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <form method="GET" class="row g-3">
+              <div class="col-md-4">
+                <label for="search" class="form-label">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ search }}" placeholder="Nome, cidade, estado...">
+              </div>
+              <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-control" id="status" name="status">
+                  <option value="">Todos os Status</option>
+                  <option value="ATIVO" {% if status_filter == 'ATIVO' %}selected{% endif %}>🟢 AO VIVO</option>
+                  <option value="PREPARACAO" {% if status_filter == 'PREPARACAO' %}selected{% endif %}>🟡 EM BREVE</option>
+                  <option value="FINALIZADO" {% if status_filter == 'FINALIZADO' %}selected{% endif %}>🏁 FINALIZADO</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="cidade" class="form-label">Cidade</label>
+                <select class="form-control" id="cidade" name="cidade">
+                  <option value="">Todas as Cidades</option>
+                  {% for cidade in cidades %}
+                  <option value="{{ cidade }}" {% if cidade_filter == cidade %}selected{% endif %}>{{ cidade }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Filtrar
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Lista de Backyards -->
+    {% if backyards %}
+    <div class="row gy-4">
+      {% for backyard in backyards %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm">
+          {% if backyard.profile_picture_path %}
+          <img src="http://localhost:9000/btl-images/{{ backyard.profile_picture_path }}" 
+               class="card-img-top" alt="{{ backyard.nome }}" style="height: 200px; object-fit: cover;">
+          {% else %}
+          <img src="{{ url_for('static', filename='img/backyard-' + (loop.index % 3 + 1)|string + '.jpg') }}" 
+               class="card-img-top" alt="{{ backyard.nome }}" style="height: 200px; object-fit: cover;">
+          {% endif %}
+          
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title">{{ backyard.nome }}</h5>
+              {% if backyard.status.value == 'ATIVO' %}
+              <span class="badge bg-success">🟢 AO VIVO</span>
+              {% elif backyard.status.value == 'PREPARACAO' %}
+              <span class="badge bg-warning">🟡 EM BREVE</span>
+              {% elif backyard.status.value == 'FINALIZADO' %}
+              <span class="badge bg-info">🏁 FINALIZADO</span>
+              {% endif %}
+            </div>
+            
+            <p class="card-text">
+              {% if backyard.descricao %}
+              {{ backyard.descricao[:100] }}{% if backyard.descricao|length > 100 %}...{% endif %}
+              {% else %}
+              Evento de backyard ultra em {{ backyard.cidade }}.
+              {% endif %}
+            </p>
+            
+            <div class="mt-auto">
+              <div class="row text-muted small mb-2">
+                <div class="col-6">
+                  <i class="bi bi-geo-alt"></i> {{ backyard.cidade }}, {{ backyard.estado }}
+                </div>
+                <div class="col-6">
+                  {% if backyard.data_evento %}
+                  <i class="bi bi-calendar"></i> {{ backyard.data_evento.strftime('%d/%m/%Y') }}
+                  {% else %}
+                  <i class="bi bi-calendar"></i> A definir
+                  {% endif %}
+                </div>
+              </div>
+              
+              {% if backyard.capacidade %}
+              {% set total_inscritos = backyard.atleta_backyards|length %}
+              {% set vagas_restantes = backyard.capacidade - total_inscritos %}
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar" role="progressbar" 
+                     style="width: {{ (total_inscritos / backyard.capacidade * 100)|round }}%">
+                </div>
+              </div>
+              <small class="text-muted">
+                {{ total_inscritos }}/{{ backyard.capacidade }} inscritos
+                {% if vagas_restantes > 0 %}
+                ({{ vagas_restantes }} vagas restantes)
+                {% else %}
+                (Lotado)
+                {% endif %}
+              </small>
+              {% endif %}
+              
+              <div class="d-grid mt-3">
+                <a href="{{ url_for('backyards.view_backyard', id=backyard.id) }}" 
+                   class="btn btn-primary">
+                  <i class="bi bi-eye"></i> Ver Detalhes
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    {% else %}
+    <!-- Nenhuma backyard encontrada -->
+    <div class="row">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
+          <h3 class="text-muted mt-3">Nenhuma backyard encontrada</h3>
+          <p class="text-muted">Tente ajustar os filtros ou aguarde novos eventos serem cadastrados.</p>
+          <a href="{{ url_for('backyards.list_backyards') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-clockwise"></i> Limpar Filtros
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+</section><!-- /Backyards Section -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit do formulário quando filtros mudarem
+document.addEventListener('DOMContentLoaded', function() {
+  const statusSelect = document.getElementById('status');
+  const cidadeSelect = document.getElementById('cidade');
+  
+  statusSelect.addEventListener('change', function() {
+    this.form.submit();
+  });
+  
+  cidadeSelect.addEventListener('change', function() {
+    this.form.submit();
+  });
+});
+</script>
+{% endblock %}

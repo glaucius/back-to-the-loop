@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre - Back to the Loop{% endblock %}
+
+{% block content %}
+
+<!-- Page Title -->
+<div class="page-title dark-background">
+  <div class="container position-relative">
+    <h1>Sobre o Back to the Loop</h1>
+    <p>Conheça nossa plataforma e a modalidade backyard ultra</p>
+    <nav class="breadcrumbs">
+      <ol>
+        <li><a href="{{ url_for('home.index') }}">Home</a></li>
+        <li class="current">Sobre</li>
+      </ol>
+    </nav>
+  </div>
+</div><!-- End Page Title -->
+
+<!-- About Section -->
+<section id="about" class="about section">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-lg-6 content" data-aos="fade-up" data-aos-delay="100">
+        <h3>O que são Backyard Ultras?</h3>
+        <p>
+          Backyard ultras são uma modalidade única de ultramaratona criada por Gary "Lazarus Lake" Cantrell. 
+          Os competidores devem correr uma distância de 6,706 km (4,167 milhas) a cada hora até que apenas 
+          uma pessoa complete uma volta sozinha - o "último em pé" (last one standing).
+        </p>
+        <ul>
+          <li><i class="bi bi-check-circle"></i> <span>Distância fixa: 6,706 km por volta</span></li>
+          <li><i class="bi bi-check-circle"></i> <span>Largada a cada hora em ponto</span></li>
+          <li><i class="bi bi-check-circle"></i> <span>Sem limite de voltas</span></li>
+          <li><i class="bi bi-check-circle"></i> <span>Vence quem completa uma volta sozinho</span></li>
+        </ul>
+      </div>
+
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+        <img src="{{ url_for('static', filename='img/about.jpg') }}" class="img-fluid" alt="Backyard Ultra">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features section light-background">
+  <div class="container">
+    <div class="section-title text-center" data-aos="fade-up">
+      <h2>Nossa Plataforma</h2>
+      <p>Conectando atletas e organizadores de backyard ultras</p>
+    </div>
+
+    <div class="row gy-4">
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-item text-center">
+          <i class="bi bi-search fs-1 text-primary"></i>
+          <h3>Encontre Eventos</h3>
+          <p>Descubra backyards próximas a você com nosso sistema de busca avançado</p>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-item text-center">
+          <i class="bi bi-person-plus fs-1 text-success"></i>
+          <h3>Inscrições Online</h3>
+          <p>Inscreva-se facilmente e receba seu número de peito automaticamente</p>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-item text-center">
+          <i class="bi bi-graph-up fs-1 text-info"></i>
+          <h3>Acompanhe Resultados</h3>
+          <p>Monitore seu progresso e veja estatísticas detalhadas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

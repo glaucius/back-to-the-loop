@@ -58,6 +58,7 @@ Class AtletaBackyard (Tabela de Inscrição - Relacionamento Many-to-Many)
     atleta_id, FK from Atleta table/class
     backyard_id, FK from Backyard table/class
     numero_peito, integer (número do peito do atleta na prova)
+    status_inscricao, varchar (inscrito, pendente, cancelado)
     data_inscricao, timestamp
     data_criacao, timestamp
     data_ultima_atualizacao, timestamp
@@ -76,15 +77,19 @@ Class AtletaLoop (Participação do Atleta no Loop)
     id, incremental, PK
     atleta_id, FK from Atleta table/class
     loop_id, FK from Loop table/class
-    status, enum (ATIVO, CONCLUIDO, ELIMINADO, DESISTENCIA)
+    status, enum (ATIVO, CONCLUIDO, ELIMINADO, DNF, DNS)
+    tempo_inicio, timestamp (quando o atleta iniciou o loop)
+    tempo_fim, timestamp (quando o atleta terminou o loop)
     tempo_total_segundos, integer (tempo em segundos para completar o loop)
+    observacoes, text (observações sobre a participação do atleta)
     criado_em, timestamp
     atualizado_em, timestamp
 
 ENUMS:
     BackyardStatus: PREPARACAO, ATIVO, PAUSADO, FINALIZADO
     LoopStatus: PREPARACAO, ATIVO, FINALIZADO
-    AtletaLoopStatus: ATIVO, CONCLUIDO, ELIMINADO, DESISTENCIA
+    AtletaLoopStatus: ATIVO, CONCLUIDO, ELIMINADO, DNF, DNS
+    StatusInscricao: inscrito, pendente, cancelado
 
 RELACIONAMENTOS:
     - Backend_Users 1:N Profile (um perfil pode ter vários usuários)
@@ -105,16 +110,30 @@ FUNCIONALIDADES PRINCIPAIS:
        - Registro de tempos de cada atleta por loop
        - Regras do Backyard Ultra: evento só termina com loop solo completado
     
-    3. Status de Atletas:
+    3. Status de Atletas nos Loops:
        - ATIVO: atleta está correndo o loop atual
        - CONCLUIDO: atleta terminou o loop no tempo
        - ELIMINADO: atleta não completou o loop no tempo
-       - DESISTENCIA: atleta desistiu voluntariamente
+       - DNF (Did Not Finish): atleta não terminou o loop por outros motivos
+       - DNS (Did Not Start): atleta não iniciou o loop
     
     4. Autenticação e Autorização:
        - Perfis: Admin (acesso total) e Organizador (suas backyards)
        - Login seguro com hash de senhas
        - Controle de acesso por decoradores
+    
+    5. Interface de Atletas (Frontend):
+       - Cadastro e login de atletas
+       - Inscrição em backyards disponíveis
+       - Visualização das próprias inscrições
+       - Edição de perfil com upload de imagem
+    
+    6. Visualização em Tempo Real:
+       - Página live para acompanhar backyards ativas
+       - Lista de atletas ativos e que chegaram (concluídos)
+       - Histórico de loops anteriores
+       - Estatísticas em tempo real
+       - Detalhes específicos de cada loop
 
 REGRAS DE NEGÓCIO:
     1. Backyard Ultra:
@@ -132,3 +151,14 @@ REGRAS DE NEGÓCIO:
        - Criados sequencialmente (1, 2, 3...)
        - Apenas atletas que completaram o loop anterior participam do próximo
        - Status automático baseado na conclusão dos participantes
+    
+    4. Visualização Live:
+       - Atletas que chegaram (CONCLUIDO) aparecem no topo da lista
+       - Atletas correndo (ATIVO) aparecem na parte inferior
+       - Atletas eliminados ficam em seção separada
+       - Atualização das estatísticas em tempo real
+    
+    5. Sistema de Imagens:
+       - Upload de imagens para atletas e backyards
+       - Armazenamento em MinIO (S3-compatible)
+       - Fallback para iniciais quando não há imagem

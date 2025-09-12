@@ -45,7 +45,21 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label for="password">Senha *</label>
-                <input type="password" class="form-control" id="password" name="password" required>
+                <input type="password" class="form-control" id="password" name="password" required
+                       minlength="8" maxlength="128"
+                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,128}$"
+                       title="A senha deve conter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais">
+                <div id="password-feedback"></div>
+                <div class="password-help mt-2">
+                  <small class="text-muted">
+                    <strong>Requisitos da senha:</strong><br>
+                    • Entre 8 e 128 caracteres<br>
+                    • Pelo menos uma letra maiúscula (A-Z)<br>
+                    • Pelo menos uma letra minúscula (a-z)<br>
+                    • Pelo menos um número (0-9)<br>
+                    • Pelo menos um caractere especial (!@#$%^&*()_+-=[]{}|;:,.<>?)
+                  </small>
+                </div>
               </div>
             </div>
           </div>
@@ -284,6 +298,43 @@ $('#cropModal').on('hidden.bs.modal', function() {
   if (cropper) {
     cropper.destroy();
     cropper = null;
+  }
+});
+</script>
+
+<!-- Password Validator -->
+<script src="{{ url_for('static', filename='js/password-validator.js') }}"></script>
+<script>
+// Inicializar validador de senha específico para atletas
+document.addEventListener('DOMContentLoaded', function() {
+  const emailField = document.getElementById('email');
+  const passwordField = document.getElementById('password');
+  
+  // Validação avançada considerando email
+  if (passwordField && emailField) {
+    passwordField.addEventListener('input', function() {
+      // Fazer validação também considerando o email
+      const email = emailField.value;
+      // Aqui você pode adicionar lógica adicional se necessário
+    });
+  }
+  
+  // Feedback visual melhorado
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      const password = passwordField.value;
+      
+      // Validação básica HTML5 já será executada
+      // Aqui você pode adicionar validações extras se necessário
+      
+      if (password.length < 8) {
+        event.preventDefault();
+        alert('A senha deve ter pelo menos 8 caracteres.');
+        passwordField.focus();
+        return false;
+      }
+    });
   }
 });
 </script>

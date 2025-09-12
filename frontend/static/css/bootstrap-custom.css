@@ -1,0 +1,270 @@
+/**
+ * Bootstrap Color Customization for BTL
+ * Overrides Bootstrap default colors to match the site's theme
+ */
+
+:root {
+  /* Primary colors based on site theme */
+  --bs-primary: #ba88ff;           /* Site accent color (purple) */
+  --bs-primary-rgb: 186, 136, 255;
+  --bs-primary-text-emphasis: #4a2d66;
+  --bs-primary-bg-subtle: #f0e8ff;
+  --bs-primary-border-subtle: #d4b8ff;
+  
+  /* Secondary colors using heading color */
+  --bs-secondary: #273d4e;         /* Site heading color (dark blue) */
+  --bs-secondary-rgb: 39, 61, 78;
+  --bs-secondary-text-emphasis: #1a2933;
+  --bs-secondary-bg-subtle: #e8ecf0;
+  --bs-secondary-border-subtle: #b8c5d1;
+  
+  /* Success - keep Bootstrap green but adjust to match site */
+  --bs-success: #198754;           /* Keep Bootstrap success green */
+  --bs-success-rgb: 25, 135, 84;
+  --bs-success-text-emphasis: #0f5132;
+  --bs-success-bg-subtle: #d1e7dd;
+  --bs-success-border-subtle: #a3cfbb;
+  
+  /* Info - using nav hover color */
+  --bs-info: #f088ff;              /* Site nav hover color (pink/purple) */
+  --bs-info-rgb: 240, 136, 255;
+  --bs-info-text-emphasis: #5c2d66;
+  --bs-info-bg-subtle: #fde8ff;
+  --bs-info-border-subtle: #f0b8ff;
+  
+  /* Warning - keep Bootstrap warning but adjust */
+  --bs-warning: #ffc107;           /* Keep Bootstrap warning yellow */
+  --bs-warning-rgb: 255, 193, 7;
+  --bs-warning-text-emphasis: #664d03;
+  --bs-warning-bg-subtle: #fff3cd;
+  --bs-warning-border-subtle: #ffda6a;
+  
+  /* Danger - keep Bootstrap danger red */
+  --bs-danger: #dc3545;            /* Keep Bootstrap danger red */
+  --bs-danger-rgb: 220, 53, 69;
+  --bs-danger-text-emphasis: #58151c;
+  --bs-danger-bg-subtle: #f8d7da;
+  --bs-danger-border-subtle: #f1aeb5;
+  
+  /* Light - using site surface color */
+  --bs-light: #f8f9fa;            /* Keep Bootstrap light */
+  --bs-light-rgb: 248, 249, 250;
+  --bs-light-text-emphasis: #495057;
+  --bs-light-bg-subtle: #fcfcfd;
+  --bs-light-border-subtle: #e9ecef;
+  
+  /* Dark - using site dark background */
+  --bs-dark: #212529;              /* Keep Bootstrap dark */
+  --bs-dark-rgb: 33, 37, 41;
+  --bs-dark-text-emphasis: #495057;
+  --bs-dark-bg-subtle: #ced4da;
+  --bs-dark-border-subtle: #adb5bd;
+  
+  /* Body colors to match site theme */
+  --bs-body-color: #444444;        /* Site default text color */
+  --bs-body-bg: #ffffff;           /* Site background color */
+  
+  /* Link colors */
+  --bs-link-color: #ba88ff;        /* Site accent color for links */
+  --bs-link-hover-color: #f088ff;  /* Site nav hover color for link hover */
+  
+  /* Border colors */
+  --bs-border-color: #dee2e6;
+  --bs-border-color-translucent: rgba(0, 0, 0, 0.175);
+  
+  /* Form colors */
+  --bs-form-valid-color: #198754;
+  --bs-form-valid-border-color: #198754;
+  --bs-form-invalid-color: #dc3545;
+  --bs-form-invalid-border-color: #dc3545;
+}
+
+/* Button customizations */
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #ba88ff;
+  --bs-btn-border-color: #ba88ff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #a066ff;
+  --bs-btn-hover-border-color: #9955ff;
+  --bs-btn-focus-shadow-rgb: 186, 136, 255;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #9955ff;
+  --bs-btn-active-border-color: #8844ff;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: #ba88ff;
+  --bs-btn-disabled-border-color: #ba88ff;
+}
+
+.btn-secondary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #273d4e;
+  --bs-btn-border-color: #273d4e;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #1e2f3c;
+  --bs-btn-hover-border-color: #1a2933;
+  --bs-btn-focus-shadow-rgb: 39, 61, 78;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #1a2933;
+  --bs-btn-active-border-color: #16242b;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: #273d4e;
+  --bs-btn-disabled-border-color: #273d4e;
+}
+
+.btn-info {
+  --bs-btn-color: #000;
+  --bs-btn-bg: #f088ff;
+  --bs-btn-border-color: #f088ff;
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: #ed66ff;
+  --bs-btn-hover-border-color: #eb55ff;
+  --bs-btn-focus-shadow-rgb: 240, 136, 255;
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: #eb55ff;
+  --bs-btn-active-border-color: #e944ff;
+  --bs-btn-disabled-color: #000;
+  --bs-btn-disabled-bg: #f088ff;
+  --bs-btn-disabled-border-color: #f088ff;
+}
+
+/* Form control customizations */
+.form-control:focus {
+  border-color: #ba88ff;
+  box-shadow: 0 0 0 0.25rem rgba(186, 136, 255, 0.25);
+}
+
+.form-select:focus {
+  border-color: #ba88ff;
+  box-shadow: 0 0 0 0.25rem rgba(186, 136, 255, 0.25);
+}
+
+/* Navigation customizations */
+.navbar-brand {
+  color: #ba88ff !important;
+}
+
+.navbar-nav .nav-link {
+  color: #273d4e !important;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+  color: #f088ff !important;
+}
+
+.navbar-nav .nav-link.active {
+  color: #ba88ff !important;
+}
+
+/* Badge customizations */
+.badge.bg-primary {
+  background-color: #ba88ff !important;
+}
+
+.badge.bg-secondary {
+  background-color: #273d4e !important;
+}
+
+.badge.bg-info {
+  background-color: #f088ff !important;
+  color: #000 !important;
+}
+
+/* Alert customizations */
+.alert-primary {
+  --bs-alert-color: #4a2d66;
+  --bs-alert-bg: #f0e8ff;
+  --bs-alert-border-color: #d4b8ff;
+}
+
+.alert-secondary {
+  --bs-alert-color: #1a2933;
+  --bs-alert-bg: #e8ecf0;
+  --bs-alert-border-color: #b8c5d1;
+}
+
+.alert-info {
+  --bs-alert-color: #5c2d66;
+  --bs-alert-bg: #fde8ff;
+  --bs-alert-border-color: #f0b8ff;
+}
+
+/* Progress bar customizations */
+.progress-bar {
+  background-color: #ba88ff;
+}
+
+.progress-bar.bg-info {
+  background-color: #f088ff !important;
+}
+
+.progress-bar.bg-secondary {
+  background-color: #273d4e !important;
+}
+
+/* Card customizations */
+.card-header {
+  background-color: rgba(186, 136, 255, 0.1);
+  border-bottom-color: rgba(186, 136, 255, 0.2);
+}
+
+/* Table customizations */
+.table-primary {
+  --bs-table-color: #4a2d66;
+  --bs-table-bg: #f0e8ff;
+  --bs-table-border-color: #d4b8ff;
+  --bs-table-striped-bg: #ede0ff;
+  --bs-table-striped-color: #4a2d66;
+  --bs-table-active-bg: #e9d9ff;
+  --bs-table-active-color: #4a2d66;
+  --bs-table-hover-bg: #ebe0ff;
+  --bs-table-hover-color: #4a2d66;
+}
+
+/* Pagination customizations */
+.page-link {
+  color: #ba88ff;
+}
+
+.page-link:hover {
+  color: #f088ff;
+  background-color: #f0e8ff;
+  border-color: #d4b8ff;
+}
+
+.page-item.active .page-link {
+  background-color: #ba88ff;
+  border-color: #ba88ff;
+}
+
+/* Dropdown customizations */
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: #f0e8ff;
+  color: #4a2d66;
+}
+
+.dropdown-item.active {
+  background-color: #ba88ff;
+  color: #fff;
+}
+
+/* Modal customizations */
+.modal-header {
+  border-bottom-color: rgba(186, 136, 255, 0.2);
+}
+
+.modal-footer {
+  border-top-color: rgba(186, 136, 255, 0.2);
+}
+
+/* Tooltip and Popover customizations */
+.tooltip-inner {
+  background-color: #273d4e;
+}
+
+.popover-header {
+  background-color: #f0e8ff;
+  border-bottom-color: #d4b8ff;
+}

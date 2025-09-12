@@ -29,8 +29,23 @@
             <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
           </div>
           <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+            <label for="password">Senha *</label>
+            <input type="password" class="form-control" id="password" name="password" required
+                   minlength="8" maxlength="128"
+                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,128}$"
+                   title="A senha deve conter pelo menos 8 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais"
+                   placeholder="Digite uma senha segura">
+            <div id="password-feedback"></div>
+            <div class="password-help mt-2">
+              <small class="text-muted">
+                <strong>Requisitos da senha:</strong><br>
+                • Entre 8 e 128 caracteres<br>
+                • Pelo menos uma letra maiúscula (A-Z)<br>
+                • Pelo menos uma letra minúscula (a-z)<br>
+                • Pelo menos um número (0-9)<br>
+                • Pelo menos um caractere especial (!@#$%^&*()_+-=[]{}|;:,.<>?)
+              </small>
+            </div>
           </div>
           <div class="form-group">
             <label for="profile_id">Profile</label>
@@ -57,4 +72,61 @@
     <!-- /.card -->
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Password Validator -->
+<script src="{{ url_for('static', filename='js/password-validator.js') }}"></script>
+<script>
+// Inicializar validador de senha específico para usuários
+document.addEventListener('DOMContentLoaded', function() {
+  const emailField = document.getElementById('email');
+  const nomeField = document.getElementById('nome');
+  const passwordField = document.getElementById('password');
+  
+  // Validação avançada considerando email e nome
+  if (passwordField) {
+    passwordField.addEventListener('input', function() {
+      // A validação já está sendo feita pelo password-validator.js
+      // Aqui você pode adicionar lógicas específicas se necessário
+    });
+  }
+  
+  // Feedback visual melhorado para formulário de usuários
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      const password = passwordField.value;
+      const email = emailField ? emailField.value : '';
+      const nome = nomeField ? nomeField.value : '';
+      
+      // Validações adicionais específicas para usuários
+      if (password.length < 8) {
+        event.preventDefault();
+        alert('A senha deve ter pelo menos 8 caracteres.');
+        passwordField.focus();
+        return false;
+      }
+      
+      // Verificar se senha contém nome ou email
+      if (nome.length > 3 && password.toLowerCase().includes(nome.toLowerCase())) {
+        event.preventDefault();
+        alert('A senha não deve conter o nome do usuário.');
+        passwordField.focus();
+        return false;
+      }
+      
+      if (email.length > 3) {
+        const emailUser = email.split('@')[0];
+        if (emailUser.length > 3 && password.toLowerCase().includes(emailUser.toLowerCase())) {
+          event.preventDefault();
+          alert('A senha não deve conter partes do email.');
+          passwordField.focus();
+          return false;
+        }
+      }
+    });
+  }
+});
+</script>
 {% endblock %}
