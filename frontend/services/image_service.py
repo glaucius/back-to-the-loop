@@ -14,17 +14,18 @@ class ImageService:
         self.minio_access_key = os.environ.get('MINIO_ACCESS_KEY', 'minioadmin')
         self.minio_secret_key = os.environ.get('MINIO_SECRET_KEY', 'minioadmin123')
         self.bucket_name = os.environ.get('MINIO_BUCKET', 'btl-images')
+        self.minio_secure = os.environ.get('MINIO_SECURE', 'False').lower() == 'true'
         
         # Initialize MinIO client
         self.client = Minio(
             self.minio_endpoint,
             access_key=self.minio_access_key,
             secret_key=self.minio_secret_key,
-            secure=False  # Set to True for HTTPS
+            secure=self.minio_secure
         )
         
-        # For URL generation, use localhost instead of internal docker name
-        self.public_endpoint = self.minio_endpoint.replace('minio:9000', 'localhost:9000')
+        # For URL generation, use public endpoint if provided, otherwise use configured endpoint
+        self.public_endpoint = os.environ.get('MINIO_PUBLIC_ENDPOINT', self.minio_endpoint)
         
         # Allowed file extensions and MIME types
         self.allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -134,10 +135,12 @@ class ImageService:
                 content_type='image/jpeg'
             )
             
+            # Use public endpoint for URL generation
+            protocol = 'https' if self.minio_secure else 'http'
             return {
                 'success': True,
                 'file_path': object_name,
-                'file_url': f"http://{self.minio_endpoint}/{self.bucket_name}/{object_name}"
+                'file_url': f"{protocol}://{self.public_endpoint}/{self.bucket_name}/{object_name}"
             }
         
         except Exception as e:
@@ -175,10 +178,12 @@ class ImageService:
                 content_type='image/jpeg'
             )
             
+            # Use public endpoint for URL generation
+            protocol = 'https' if self.minio_secure else 'http'
             return {
                 'success': True,
                 'file_path': object_name,
-                'file_url': f"http://{self.minio_endpoint}/{self.bucket_name}/{object_name}"
+                'file_url': f"{protocol}://{self.public_endpoint}/{self.bucket_name}/{object_name}"
             }
         
         except Exception as e:
@@ -200,7 +205,8 @@ class ImageService:
                 return None
             
             # Since bucket is public, we can use direct URLs
-            public_url = f"http://localhost:9000/{self.bucket_name}/{file_path}"
+            protocol = 'https' if self.minio_secure else 'http'
+            public_url = f"{protocol}://{self.public_endpoint}/{self.bucket_name}/{file_path}"
             return public_url
         except Exception as e:
             print(f"Error getting image URL: {e}")
@@ -210,4 +216,5 @@ class ImageService:
         """Get public URL for image (if bucket is public)"""
         if not file_path:
             return None
-        return f"http://{self.minio_endpoint}/{self.bucket_name}/{file_path}"
+        protocol = 'https' if self.minio_secure else 'http'
+        return f"{protocol}://{self.public_endpoint}/{self.bucket_name}/{file_path}"

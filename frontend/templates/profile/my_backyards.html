@@ -29,7 +29,7 @@
           
           <!-- Backyard Image -->
           {% if inscricao.backyard.profile_picture_path %}
-          <img src="http://localhost:9000/btl-images/{{ inscricao.backyard.profile_picture_path }}" 
+          <img src="{{ inscricao.backyard.profile_picture_path | minio_url }}" 
                class="card-img-top" alt="{{ inscricao.backyard.nome }}" 
                style="height: 200px; object-fit: cover;">
           {% else %}

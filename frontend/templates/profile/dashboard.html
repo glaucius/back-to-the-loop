@@ -78,7 +78,7 @@
           </div>
           <div class="card-body text-center">
             {% if current_user.imagem_perfil %}
-            <img src="http://localhost:9000/btl-images/{{ current_user.imagem_perfil }}" 
+            <img src="{{ current_user.imagem_perfil | minio_url }}" 
                  class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;" 
                  alt="Foto de {{ current_user.nome }}">
             {% else %}
