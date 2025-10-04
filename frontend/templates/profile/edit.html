@@ -53,7 +53,7 @@
                 <div class="col-12 text-center">
                   <div class="profile-image-container">
                     {% if current_user.imagem_perfil %}
-                    <img src="http://localhost:9000/btl-images/{{ current_user.imagem_perfil }}" 
+                    <img src="{{ current_user.imagem_perfil | minio_url }}" 
                          class="rounded-circle mb-3" alt="Foto de Perfil" 
                          style="width: 120px; height: 120px; object-fit: cover;">
                     {% else %}

@@ -146,7 +146,7 @@
                       <div class="d-flex align-items-center">
                         <div class="me-3">
                           {% if atleta_loop.atleta.imagem_perfil %}
-                          <img src="http://localhost:9000/btl-images/{{ atleta_loop.atleta.imagem_perfil }}" 
+                          <img src="{{ atleta_loop.atleta.imagem_perfil | minio_url }}" 
                                class="rounded-circle" alt="{{ atleta_loop.atleta.nome }}" 
                                style="width: 40px; height: 40px; object-fit: cover;">
                           {% else %}
@@ -228,7 +228,7 @@
                       <div class="d-flex align-items-center">
                         <div class="me-3">
                           {% if atleta_loop.atleta.imagem_perfil %}
-                          <img src="http://localhost:9000/btl-images/{{ atleta_loop.atleta.imagem_perfil }}" 
+                          <img src="{{ atleta_loop.atleta.imagem_perfil | minio_url }}" 
                                class="rounded-circle" alt="{{ atleta_loop.atleta.nome }}" 
                                style="width: 40px; height: 40px; object-fit: cover;">
                           {% else %}
@@ -313,7 +313,7 @@
                       <div class="d-flex align-items-center">
                         <div class="me-3">
                           {% if atleta_loop.atleta.imagem_perfil %}
-                          <img src="http://localhost:9000/btl-images/{{ atleta_loop.atleta.imagem_perfil }}" 
+                          <img src="{{ atleta_loop.atleta.imagem_perfil | minio_url }}" 
                                class="rounded-circle" alt="{{ atleta_loop.atleta.nome }}" 
                                style="width: 40px; height: 40px; object-fit: cover;">
                           {% else %}

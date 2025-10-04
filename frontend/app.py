@@ -57,6 +57,15 @@ def create_app():
     app.register_blueprint(profile_bp, url_prefix='/profile')
     app.register_blueprint(backyards_bp, url_prefix='/backyards')
     
+    # Custom Jinja2 filters
+    @app.template_filter('minio_url')
+    def minio_url_filter(file_path):
+        """Generate MinIO URL for a file path"""
+        if not file_path:
+            return None
+        image_service = ImageService()
+        return image_service.get_public_url(file_path)
+    
     # Context processors for templates
     @app.context_processor
     def inject_globals():

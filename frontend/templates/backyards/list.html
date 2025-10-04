@@ -74,7 +74,7 @@
       <div class="col-lg-4 col-md-6">
         <div class="card h-100 shadow-sm">
           {% if backyard.profile_picture_path %}
-          <img src="http://localhost:9000/btl-images/{{ backyard.profile_picture_path }}" 
+          <img src="{{ backyard.profile_picture_path | minio_url }}" 
                class="card-img-top" alt="{{ backyard.nome }}" style="height: 200px; object-fit: cover;">
           {% else %}
           <img src="{{ url_for('static', filename='img/backyard-' + (loop.index % 3 + 1)|string + '.jpg') }}" 

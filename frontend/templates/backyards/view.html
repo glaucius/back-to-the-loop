@@ -30,7 +30,7 @@
       <div class="col-lg-8">
         <div class="card">
           {% if backyard.profile_picture_path %}
-          <img src="http://localhost:9000/btl-images/{{ backyard.profile_picture_path }}" class="card-img-top" alt="{{ backyard.nome }}" style="height: 300px; object-fit: cover;">
+          <img src="{{ backyard.profile_picture_path | minio_url }}" class="card-img-top" alt="{{ backyard.nome }}" style="height: 300px; object-fit: cover;">
           {% else %}
           <img src="{{ url_for('static', filename='img/backyard-1.jpg') }}" class="card-img-top" alt="{{ backyard.nome }}" style="height: 300px; object-fit: cover;">
           {% endif %}
